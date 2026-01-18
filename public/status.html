@@ -6,167 +6,556 @@
     <title>Deploying... | Hawai Hosting</title>
     <link rel="icon" type="image/png" href="/logo.png" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=JetBrains+Mono:wght@400;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
 
     <style>
+      :root {
+        --primary: #00f3ff;
+        --secondary: #bc13fe;
+        --bg: #050505;
+        --glass: rgba(10, 15, 20, 0.7);
+        --terminal-bg: rgba(0, 0, 0, 0.85);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        background-color: #020204;
+        background-color: var(--bg);
         color: white;
         margin: 0;
         overflow: hidden;
+        height: 100vh;
+        font-family: "Share Tech Mono", monospace;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
-        height: 100vh;
-        font-family: "JetBrains Mono", monospace;
+        justify-content: center;
+        perspective: 1000px;
       }
 
-      /* LOGO ANIMATION */
-      .logo-container {
-        margin-bottom: 40px;
+      /* BACKGROUND CANVAS */
+      #matrixCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        opacity: 0.3;
+      }
+
+      /* CRT SCREEN EFFECT */
+      .scanlines {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0) 50%,
+          rgba(0, 0, 0, 0.2) 50%,
+          rgba(0, 0, 0, 0.2)
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+        z-index: 100;
+        opacity: 0.6;
+      }
+      .vignette {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, transparent 50%, black 100%);
+        z-index: 99;
+        pointer-events: none;
+      }
+
+      /* MAIN CONTAINER */
+      .container {
         position: relative;
+        z-index: 10;
+        width: 90%;
+        max-width: 600px;
+        text-align: center;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(0, 243, 255, 0.3);
+        padding: 40px;
+        border-radius: 10px;
+        background: var(--glass);
+        box-shadow: 0 0 50px rgba(0, 243, 255, 0.1);
+        transform-style: preserve-3d;
+        transition: transform 0.1s;
       }
+
+      /* LOGO */
       .logo-img {
-        width: 150px;
-        filter: drop-shadow(0 0 20px #00f3ff);
-        animation: pulse 2s infinite;
+        width: 120px;
+        filter: drop-shadow(0 0 15px var(--primary));
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
       }
-      @keyframes pulse {
+      @keyframes float {
         0%,
         100% {
-          filter: drop-shadow(0 0 20px #00f3ff) scale(1);
+          transform: translateY(0);
         }
         50% {
-          filter: drop-shadow(0 0 50px #bc13fe) scale(1.05);
+          transform: translateY(-10px);
         }
       }
 
-      /* TEXTS */
+      /* GLITCH TITLE */
       .title {
-        font-family: "Syncopate";
-        font-size: 2rem;
-        margin-bottom: 20px;
-        letter-spacing: 5px;
-        text-align: center;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        position: relative;
+        text-shadow: 2px 2px var(--secondary);
+        margin-bottom: 30px;
       }
-      .status-text {
-        color: #00ff9d;
-        font-size: 0.9rem;
-        margin-bottom: 10px;
-        min-height: 20px;
+      .title::before,
+      .title::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: var(--bg);
+      }
+      .title::before {
+        left: 2px;
+        text-shadow: -1px 0 var(--primary);
+        clip: rect(24px, 550px, 90px, 0);
+        animation: glitch-anim-2 3s infinite linear alternate-reverse;
+      }
+      .title::after {
+        left: -2px;
+        text-shadow: -1px 0 var(--secondary);
+        clip: rect(85px, 550px, 140px, 0);
+        animation: glitch-anim 2.5s infinite linear alternate-reverse;
       }
 
-      /* PROGRESS BAR */
-      .bar-wrapper {
-        width: 300px;
-        height: 4px;
-        background: #333;
-        border-radius: 2px;
-        overflow: hidden;
+      @keyframes glitch-anim {
+        0% {
+          clip: rect(10px, 9999px, 31px, 0);
+        }
+        20% {
+          clip: rect(65px, 9999px, 89px, 0);
+        }
+        40% {
+          clip: rect(22px, 9999px, 6px, 0);
+        }
+        60% {
+          clip: rect(89px, 9999px, 12px, 0);
+        }
+        80% {
+          clip: rect(4px, 9999px, 49px, 0);
+        }
+        100% {
+          clip: rect(35px, 9999px, 98px, 0);
+        }
+      }
+      @keyframes glitch-anim-2 {
+        0% {
+          clip: rect(65px, 9999px, 100px, 0);
+        }
+        100% {
+          clip: rect(10px, 9999px, 60px, 0);
+        }
+      }
+
+      /* PROGRESS BAR AREA */
+      .bar-container {
+        margin-bottom: 15px;
         position: relative;
       }
+
+      .bar-wrapper {
+        width: 100%;
+        height: 8px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        position: relative;
+        overflow: hidden;
+      }
+
       .bar-fill {
         width: 0%;
         height: 100%;
-        background: #00f3ff;
-        box-shadow: 0 0 15px #00f3ff;
-        transition: width 0.3s linear;
+        background: var(--primary);
+        box-shadow: 0 0 20px var(--primary);
+        position: relative;
+      }
+      .bar-fill::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.2) 25%,
+          transparent 25%,
+          transparent 50%,
+          rgba(255, 255, 255, 0.2) 50%,
+          rgba(255, 255, 255, 0.2) 75%,
+          transparent 75%,
+          transparent
+        );
+        background-size: 20px 20px;
+        animation: moveStripe 1s linear infinite;
+      }
+      @keyframes moveStripe {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 20px 20px;
+        }
       }
 
-      /* DECORATION */
-      .grid {
-        position: fixed;
-        inset: 0;
-        background-image:
-          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-        background-size: 50px 50px;
-        z-index: -1;
+      .stats-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        color: var(--primary);
+        margin-top: 5px;
+      }
+
+      /* TERMINAL WINDOW (New Feature) */
+      .terminal {
+        background: var(--terminal-bg);
+        border: 1px solid #333;
+        height: 120px;
+        width: 100%;
+        margin-top: 20px;
+        padding: 10px;
+        text-align: left;
+        font-size: 0.75rem;
+        color: #0f0;
+        overflow-y: hidden;
+        position: relative;
+        font-family: "Share Tech Mono", monospace;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
+      }
+      .terminal::before {
+        content: "SYSTEM LOGS // ROOT ACCESS";
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--primary);
+        color: black;
+        font-size: 0.6rem;
+        padding: 2px 5px;
+        font-weight: bold;
+      }
+      .log-entry {
+        margin: 2px 0;
+        opacity: 0.8;
+      }
+      .log-entry.latest {
+        color: #fff;
+        font-weight: bold;
+        text-shadow: 0 0 5px white;
+      }
+
+      /* INTERACTIVE BUTTON */
+      .boost-btn {
+        margin-top: 25px;
+        background: transparent;
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        padding: 10px 30px;
+        font-family: "Rajdhani", sans-serif;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        transition: 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+      .boost-btn:hover {
+        background: var(--primary);
+        color: black;
+        box-shadow: 0 0 30px var(--primary);
+      }
+      .boost-btn:active {
+        transform: scale(0.95);
+      }
+      /* Partikel button */
+      .boost-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        transition: 0.5s;
+      }
+      .boost-btn:hover::before {
+        left: 100%;
+      }
+
+      /* Shake animation for boost */
+      .shake {
+        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+      @keyframes shake {
+        10%,
+        90% {
+          transform: translate3d(-1px, 0, 0);
+        }
+        20%,
+        80% {
+          transform: translate3d(2px, 0, 0);
+        }
+        30%,
+        50%,
+        70% {
+          transform: translate3d(-4px, 0, 0);
+        }
+        40%,
+        60% {
+          transform: translate3d(4px, 0, 0);
+        }
       }
     </style>
   </head>
   <body>
-    <div class="grid"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
 
-    <div class="logo-container">
-      <img src="/logo.png" class="logo-img" alt="Hawai" />
-    </div>
+    <canvas id="matrixCanvas"></canvas>
 
-    <div class="title">INITIALIZING<br />DEPLOYMENT</div>
+    <div class="container" id="mainContainer">
+      <div class="logo-container">
+        <img
+          src="/logo.png"
+          class="logo-img"
+          alt="Hawai"
+          onerror="this.style.display = 'none'"
+        />
+        <div
+          id="logoText"
+          style="
+            display: none;
+            color: var(--primary);
+            font-size: 3rem;
+            margin-bottom: 10px;
+          "
+        >
+          HW
+        </div>
+      </div>
 
-    <div id="statusText" class="status-text">CONNECTING TO SATELLITE...</div>
+      <div class="title" data-text="INITIALIZING">INITIALIZING</div>
 
-    <div class="bar-wrapper">
-      <div id="progressBar" class="bar-fill"></div>
-    </div>
+      <div class="bar-container">
+        <div class="bar-wrapper">
+          <div id="progressBar" class="bar-fill"></div>
+        </div>
+        <div class="stats-row">
+          <span id="pctText">0%</span>
+          <span>EST: <span id="timer">45</span>s</span>
+        </div>
+      </div>
 
-    <div style="margin-top: 20px; color: #666; font-size: 0.7rem">
-      ESTIMATED TIME: <span id="timer">45</span>s
+      <div class="terminal" id="terminalBox">
+        <div class="log-entry">
+          > Connecting to Hawai Satellite [Encrypted]...
+        </div>
+      </div>
+
+      <button class="boost-btn" id="boostBtn" onclick="boostSpeed()">
+        ⚡ BOOST NETWORK
+      </button>
     </div>
 
     <script>
-      // Ambil URL target dari parameter ?url=...
+      // === 1. SETUP VARIABEL ===
       const params = new URLSearchParams(window.location.search);
       const targetUrl = params.get("url");
 
-      if (!targetUrl) {
-        document.body.innerHTML =
-          "<h1 style='color:red'>ERROR: NO TARGET URL</h1>";
-      }
-
-      const statusEl = document.getElementById("statusText");
       const barEl = document.getElementById("progressBar");
       const timerEl = document.getElementById("timer");
+      const pctEl = document.getElementById("pctText");
+      const terminalEl = document.getElementById("terminalBox");
+      const boostBtn = document.getElementById("boostBtn");
+      const container = document.getElementById("mainContainer");
 
-      // Simulasi Log Proses (Agar terlihat canggih)
-      const logs = [
-        { pct: 5, msg: "VERIFYING INTEGRITY..." },
-        { pct: 15, msg: "UPLOADING ASSETS TO CLOUD..." },
-        { pct: 30, msg: "ALLOCATING EDGE SERVERS..." },
-        { pct: 45, msg: "PROPAGATING DNS (GLOBAL)..." },
-        { pct: 60, msg: "INSTALLING SSL CERTIFICATES..." },
-        { pct: 80, msg: "CLEARING CACHE..." },
-        { pct: 90, msg: "FINALIZING DEPLOYMENT..." },
-        { pct: 98, msg: "LAUNCHING..." },
+      // Jika image error, tampilkan teks
+      document
+        .querySelector(".logo-img")
+        .addEventListener("error", function () {
+          this.style.display = "none";
+          document.getElementById("logoText").style.display = "block";
+        });
+
+      // === 2. ANIMASI BACKGROUND (MATRIX RAIN SEDERHANA) ===
+      const canvas = document.getElementById("matrixCanvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const chars = "010101HAWAIHOSTINGXY";
+      const fontSize = 14;
+      const columns = canvas.width / fontSize;
+      const drops = [];
+
+      for (let x = 0; x < columns; x++) drops[x] = 1;
+
+      function drawMatrix() {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; // Trail effect
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#00f3ff"; // Text color
+        ctx.font = fontSize + "px monospace";
+
+        for (let i = 0; i < drops.length; i++) {
+          const text = chars.charAt(Math.floor(Math.random() * chars.length));
+          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+          }
+          drops[i]++;
+        }
+      }
+      setInterval(drawMatrix, 50);
+
+      // Resize handler
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      });
+
+      // === 3. LOGIC LOADING & TERMINAL ===
+      const logMessages = [
+        "Handshaking with satellite node...",
+        "Verifying SSL handshake...",
+        "Allocating memory blocks...",
+        "Optimizing assets (Gzip)...",
+        "Connecting to CDN edge...",
+        "Bypassing firewall rules...",
+        "Injecting dependencies...",
+        "Finalizing build sequence...",
+        "Clearing cache buffers...",
+        "Ready to launch.",
       ];
 
       let progress = 0;
-      // Total waktu tunggu 45 detik (Cukup untuk Cloudflare build)
-      const totalTime = 45000;
-      const intervalTime = 100; // Update tiap 100ms
-      const step = 100 / (totalTime / intervalTime);
+      let totalTime = 45000; // 45 detik
+      let intervalSpeed = 100;
+      let currentSpeedMultiplier = 1;
+      let step = 100 / (totalTime / intervalSpeed);
+      let nextLogThreshold = 10;
+      let logIndex = 0;
 
-      const timer = setInterval(() => {
-        progress += step;
+      function addLog(msg) {
+        const div = document.createElement("div");
+        div.className = "log-entry latest";
+        div.innerText = `> ${msg}`;
 
-        // Update Bar
-        barEl.style.width = Math.min(progress, 100) + "%";
+        // Remove 'latest' class from previous siblings
+        const prev = terminalEl.querySelectorAll(".latest");
+        prev.forEach((el) => el.classList.remove("latest"));
 
-        // Update Timer Countdown
-        const remaining = Math.ceil(
-          ((100 - progress) / step) * (intervalTime / 1000),
+        terminalEl.appendChild(div);
+        terminalEl.scrollTop = terminalEl.scrollHeight; // Auto scroll
+      }
+
+      const timerInterval = setInterval(() => {
+        // Logic percepatan
+        progress += step * currentSpeedMultiplier;
+
+        // Visual Update
+        const visualPct = Math.min(progress, 100);
+        barEl.style.width = visualPct + "%";
+        pctEl.innerText = Math.floor(visualPct) + "%";
+
+        // Hitung waktu sisa
+        const remainingMs = Math.max(
+          0,
+          ((100 - progress) / (step * currentSpeedMultiplier)) * intervalSpeed,
         );
-        timerEl.innerText = Math.max(0, remaining);
+        timerEl.innerText = Math.ceil(remainingMs / 1000);
 
-        // Update Status Text based on progress
-        for (let log of logs) {
-          if (progress >= log.pct) statusEl.innerText = log.msg;
+        // Tambah log otomatis berdasarkan progress
+        if (progress > nextLogThreshold && logIndex < logMessages.length) {
+          addLog(logMessages[logIndex]);
+          logIndex++;
+          nextLogThreshold += 10; // Tiap 10% nambah log
         }
 
         // Selesai
         if (progress >= 100) {
-          clearInterval(timer);
-          statusEl.innerText = "DEPLOYMENT COMPLETE. REDIRECTING...";
-          statusEl.style.color = "#00f3ff";
-
-          setTimeout(() => {
-            window.location.href = targetUrl;
-          }, 1000);
+          clearInterval(timerInterval);
+          finishDeployment();
         }
-      }, intervalTime);
+      }, intervalSpeed);
+
+      // === 4. INTERACTIVE BOOST ===
+      function boostSpeed() {
+        if (currentSpeedMultiplier > 10) return; // Max speed limit
+
+        currentSpeedMultiplier += 2; // Tambah kecepatan
+        boostBtn.innerText = `SPEED: ${currentSpeedMultiplier}x`;
+
+        addLog(`USER OVERRIDE: CPU OVERCLOCK [${currentSpeedMultiplier}x]`);
+
+        // Efek Visual Shake
+        container.classList.remove("shake");
+        void container.offsetWidth; // Trigger reflow
+        container.classList.add("shake");
+
+        // Ganti warna sementara
+        document.documentElement.style.setProperty("--primary", "#ff0055");
+        setTimeout(() => {
+          document.documentElement.style.setProperty("--primary", "#00f3ff");
+        }, 300);
+      }
+
+      function finishDeployment() {
+        pctEl.innerText = "100%";
+        timerEl.innerText = "0";
+        document.querySelector(".title").innerText = "DEPLOYED";
+        document.querySelector(".title").setAttribute("data-text", "DEPLOYED");
+        boostBtn.style.display = "none";
+
+        addLog("SUCCESS: Redirecting to target...");
+
+        barEl.style.background = "#0f0";
+        barEl.style.boxShadow = "0 0 50px #0f0";
+
+        setTimeout(() => {
+          if (targetUrl) {
+            window.location.href = targetUrl;
+          } else {
+            addLog("ERROR: NO TARGET URL FOUND.");
+          }
+        }, 1500);
+      }
     </script>
   </body>
 </html>
