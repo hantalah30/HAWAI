@@ -3,559 +3,729 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Deploying... | Hawai Hosting</title>
+    <title>SYSTEM BOOT | HAWAI HOSTING</title>
     <link rel="icon" type="image/png" href="/logo.png" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&family=Share+Tech+Mono&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&family=Syncopate:wght@700&display=swap"
       rel="stylesheet"
     />
 
     <style>
       :root {
-        --primary: #00f3ff;
-        --secondary: #bc13fe;
-        --bg: #050505;
-        --glass: rgba(10, 15, 20, 0.7);
-        --terminal-bg: rgba(0, 0, 0, 0.85);
+        /* PALETTE */
+        --void-black: #020204;
+        --neon-blue: #00f3ff;
+        --neon-purple: #bc13fe;
+        --neon-green: #00ff9d;
+        --glass-bg: rgba(10, 15, 20, 0.65);
+        --border-color: rgba(0, 243, 255, 0.3);
       }
 
       * {
+        cursor: none; /* Hide default cursor */
         box-sizing: border-box;
       }
 
       body {
-        background-color: var(--bg);
+        background-color: var(--void-black);
         color: white;
         margin: 0;
         overflow: hidden;
         height: 100vh;
-        font-family: "Share Tech Mono", monospace;
+        font-family: "JetBrains Mono", monospace;
         display: flex;
-        flex-direction: column;
-        align-items: center;
         justify-content: center;
-        perspective: 1000px;
+        align-items: center;
       }
 
-      /* BACKGROUND CANVAS */
-      #matrixCanvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -2;
-        opacity: 0.3;
-      }
-
-      /* CRT SCREEN EFFECT */
-      .scanlines {
+      /* === 1. CRT OVERLAY & VIBE === */
+      .crt-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: linear-gradient(
-          to bottom,
-          rgba(255, 255, 255, 0),
-          rgba(255, 255, 255, 0) 50%,
-          rgba(0, 0, 0, 0.2) 50%,
-          rgba(0, 0, 0, 0.2)
-        );
-        background-size: 100% 4px;
+        background:
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+          linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.06),
+            rgba(0, 255, 0, 0.02),
+            rgba(0, 0, 255, 0.06)
+          );
+        background-size:
+          100% 2px,
+          3px 100%;
         pointer-events: none;
-        z-index: 100;
-        opacity: 0.6;
+        z-index: 9999;
+        animation: flicker 0.15s infinite;
+        opacity: 0.8;
       }
-      .vignette {
+
+      @keyframes flicker {
+        0% {
+          opacity: 0.85;
+        }
+        50% {
+          opacity: 0.8;
+        }
+        100% {
+          opacity: 0.85;
+        }
+      }
+
+      /* === 2. BACKGROUND PARTICLES === */
+      #vortex-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+      }
+
+      /* === 3. CUSTOM CURSOR === */
+      .cursor-dot,
+      .cursor-circle {
+        position: fixed;
+        top: 0;
+        left: 0;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 10000;
+        mix-blend-mode: difference;
+      }
+      .cursor-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--neon-blue);
+        border-radius: 50%;
+      }
+      .cursor-circle {
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--neon-blue);
+        border-radius: 50%;
+        transition:
+          width 0.2s,
+          height 0.2s,
+          background-color 0.2s;
+      }
+      /* Interactive State */
+      body.hovering .cursor-circle {
+        width: 60px;
+        height: 60px;
+        background-color: rgba(0, 243, 255, 0.1);
+        border-color: var(--neon-green);
+        border-style: dashed;
+        animation: spinCursor 4s linear infinite;
+      }
+      @keyframes spinCursor {
+        to {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
+      /* === 4. FAKE OS / BOOT SEQUENCE === */
+      .boot-layer {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: radial-gradient(circle, transparent 50%, black 100%);
-        z-index: 99;
-        pointer-events: none;
+        background-color: var(--void-black);
+        z-index: 5000;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        color: var(--neon-green);
+      }
+      .boot-log {
+        margin-bottom: 5px;
+        opacity: 0.8;
       }
 
-      /* MAIN CONTAINER */
-      .container {
+      /* === 5. GATES (GERBANG) === */
+      .gate {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        background: #050505;
+        z-index: 4000;
+        transition: transform 1.5s cubic-bezier(0.77, 0, 0.175, 1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-right: 5px solid var(--neon-purple); /* Decoration */
+        border-left: 5px solid var(--neon-purple);
+      }
+      .gate-top {
+        top: 0;
+        border-bottom: 2px solid var(--neon-blue);
+        align-items: flex-end;
+      }
+      .gate-bottom {
+        bottom: 0;
+        border-top: 2px solid var(--neon-blue);
+        align-items: flex-start;
+      }
+      .gate-text {
+        font-family: "Rajdhani", sans-serif;
+        font-size: 1.2rem;
+        letter-spacing: 5px;
+        color: #333;
+        margin: 10px;
+      }
+
+      /* Open State */
+      body.access-granted .gate-top {
+        transform: translateY(-100%);
+      }
+      body.access-granted .gate-bottom {
+        transform: translateY(100%);
+      }
+      body.access-granted .boot-layer {
+        display: none;
+      }
+
+      /* === 6. MAIN HUD (HEADS-UP DISPLAY) === */
+      .hud-container {
         position: relative;
         z-index: 10;
         width: 90%;
-        max-width: 600px;
-        text-align: center;
-        backdrop-filter: blur(5px);
-        border: 1px solid rgba(0, 243, 255, 0.3);
-        padding: 40px;
-        border-radius: 10px;
-        background: var(--glass);
-        box-shadow: 0 0 50px rgba(0, 243, 255, 0.1);
-        transform-style: preserve-3d;
-        transition: transform 0.1s;
+        max-width: 650px;
+        padding: 50px;
+
+        /* Glassmorphism */
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 0 30px rgba(0, 243, 255, 0.05);
+
+        /* Tech Corners */
+        clip-path: polygon(0 0, 100% 0, 100% 85%, 95% 100%, 0 100%);
       }
 
-      /* LOGO */
-      .logo-img {
-        width: 120px;
-        filter: drop-shadow(0 0 15px var(--primary));
-        margin-bottom: 20px;
-        animation: float 3s ease-in-out infinite;
+      /* Decorative Lines */
+      .hud-line {
+        position: absolute;
+        background: var(--neon-blue);
       }
-      @keyframes float {
-        0%,
-        100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-10px);
-        }
+      .hl-top {
+        top: 0;
+        left: 0;
+        width: 30%;
+        height: 2px;
+      }
+      .hl-bottom {
+        bottom: 0;
+        right: 0;
+        width: 40%;
+        height: 2px;
       }
 
-      /* GLITCH TITLE */
-      .title {
-        font-family: "Rajdhani", sans-serif;
-        font-size: 2.5rem;
+      /* Glitch Title */
+      .glitch-title {
+        font-family: "Syncopate", sans-serif;
         font-weight: 700;
-        color: #fff;
+        font-size: 2.5rem;
+        color: white;
         text-transform: uppercase;
         position: relative;
-        text-shadow: 2px 2px var(--secondary);
         margin-bottom: 30px;
+        text-shadow: 2px 2px var(--neon-purple);
       }
-      .title::before,
-      .title::after {
+      .glitch-title::before,
+      .glitch-title::after {
         content: attr(data-text);
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: var(--bg);
+        background: var(--void-black); /* Matches boot bg */
       }
-      .title::before {
+      .glitch-title::before {
         left: 2px;
-        text-shadow: -1px 0 var(--primary);
+        text-shadow: -2px 0 var(--neon-blue);
         clip: rect(24px, 550px, 90px, 0);
+        animation: glitch-anim-1 2.5s infinite linear alternate-reverse;
+      }
+      .glitch-title::after {
+        left: -2px;
+        text-shadow: -2px 0 var(--neon-purple);
+        clip: rect(85px, 550px, 140px, 0);
         animation: glitch-anim-2 3s infinite linear alternate-reverse;
       }
-      .title::after {
-        left: -2px;
-        text-shadow: -1px 0 var(--secondary);
-        clip: rect(85px, 550px, 140px, 0);
-        animation: glitch-anim 2.5s infinite linear alternate-reverse;
-      }
 
-      @keyframes glitch-anim {
+      @keyframes glitch-anim-1 {
         0% {
-          clip: rect(10px, 9999px, 31px, 0);
-        }
-        20% {
-          clip: rect(65px, 9999px, 89px, 0);
-        }
-        40% {
-          clip: rect(22px, 9999px, 6px, 0);
-        }
-        60% {
-          clip: rect(89px, 9999px, 12px, 0);
-        }
-        80% {
-          clip: rect(4px, 9999px, 49px, 0);
+          clip: rect(20px, 9999px, 10px, 0);
         }
         100% {
-          clip: rect(35px, 9999px, 98px, 0);
+          clip: rect(80px, 9999px, 50px, 0);
         }
       }
       @keyframes glitch-anim-2 {
         0% {
-          clip: rect(65px, 9999px, 100px, 0);
+          clip: rect(10px, 9999px, 80px, 0);
         }
         100% {
-          clip: rect(10px, 9999px, 60px, 0);
+          clip: rect(90px, 9999px, 20px, 0);
         }
       }
 
-      /* PROGRESS BAR AREA */
-      .bar-container {
-        margin-bottom: 15px;
-        position: relative;
+      /* Progress Bar HUD */
+      .status-panel {
+        display: flex;
+        justify-content: space-between;
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 600;
+        color: var(--neon-blue);
+        margin-bottom: 10px;
+        font-size: 1.1rem;
       }
 
-      .bar-wrapper {
+      .bar-frame {
         width: 100%;
-        height: 8px;
-        background: #1a1a1a;
-        border: 1px solid #333;
+        height: 12px;
+        background: #111;
+        border: 1px solid #444;
         position: relative;
+        margin-bottom: 30px;
         overflow: hidden;
       }
-
       .bar-fill {
-        width: 0%;
         height: 100%;
-        background: var(--primary);
-        box-shadow: 0 0 20px var(--primary);
+        width: 0%;
+        background: var(--neon-blue);
+        box-shadow: 0 0 15px var(--neon-blue);
         position: relative;
       }
+      /* Striped animation on bar */
       .bar-fill::after {
         content: "";
         position: absolute;
         top: 0;
         left: 0;
-        bottom: 0;
         right: 0;
+        bottom: 0;
         background: linear-gradient(
           45deg,
-          rgba(255, 255, 255, 0.2) 25%,
           transparent 25%,
+          rgba(0, 0, 0, 0.5) 25%,
+          rgba(0, 0, 0, 0.5) 50%,
           transparent 50%,
-          rgba(255, 255, 255, 0.2) 50%,
-          rgba(255, 255, 255, 0.2) 75%,
           transparent 75%,
-          transparent
+          rgba(0, 0, 0, 0.5) 75%
         );
-        background-size: 20px 20px;
-        animation: moveStripe 1s linear infinite;
-      }
-      @keyframes moveStripe {
-        0% {
-          background-position: 0 0;
-        }
-        100% {
-          background-position: 20px 20px;
-        }
+        background-size: 10px 10px;
       }
 
-      .stats-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.8rem;
-        color: var(--primary);
-        margin-top: 5px;
-      }
-
-      /* TERMINAL WINDOW (New Feature) */
-      .terminal {
-        background: var(--terminal-bg);
-        border: 1px solid #333;
-        height: 120px;
-        width: 100%;
-        margin-top: 20px;
-        padding: 10px;
-        text-align: left;
-        font-size: 0.75rem;
-        color: #0f0;
-        overflow-y: hidden;
-        position: relative;
-        font-family: "Share Tech Mono", monospace;
-        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9);
-      }
-      .terminal::before {
-        content: "SYSTEM LOGS // ROOT ACCESS";
-        position: absolute;
-        top: 0;
-        right: 0;
-        background: var(--primary);
-        color: black;
-        font-size: 0.6rem;
-        padding: 2px 5px;
-        font-weight: bold;
-      }
-      .log-entry {
-        margin: 2px 0;
-        opacity: 0.8;
-      }
-      .log-entry.latest {
-        color: #fff;
-        font-weight: bold;
-        text-shadow: 0 0 5px white;
-      }
-
-      /* INTERACTIVE BUTTON */
-      .boost-btn {
-        margin-top: 25px;
-        background: transparent;
-        border: 1px solid var(--primary);
-        color: var(--primary);
-        padding: 10px 30px;
-        font-family: "Rajdhani", sans-serif;
-        font-weight: bold;
-        font-size: 1rem;
-        cursor: pointer;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        transition: 0.3s;
-        position: relative;
+      /* Terminal Output */
+      .terminal-box {
+        background: rgba(0, 0, 0, 0.8);
+        border-left: 2px solid var(--neon-green);
+        padding: 15px;
+        height: 100px;
         overflow: hidden;
+        font-size: 0.8rem;
+        color: #eee;
+        margin-bottom: 25px;
+        position: relative;
       }
-      .boost-btn:hover {
-        background: var(--primary);
-        color: black;
-        box-shadow: 0 0 30px var(--primary);
+      .log-line {
+        display: block;
+        margin-bottom: 4px;
       }
-      .boost-btn:active {
-        transform: scale(0.95);
-      }
-      /* Partikel button */
-      .boost-btn::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.4),
-          transparent
-        );
-        transition: 0.5s;
-      }
-      .boost-btn:hover::before {
-        left: 100%;
+      .log-line.new {
+        color: var(--neon-green);
+        text-shadow: 0 0 5px var(--neon-green);
       }
 
-      /* Shake animation for boost */
-      .shake {
-        animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      /* Button Cyber */
+      .btn-cyber {
+        background: transparent;
+        border: 1px solid var(--neon-blue);
+        color: var(--neon-blue);
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 700;
+        font-size: 1.2rem;
+        padding: 15px 40px;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        position: relative;
+        transition: 0.3s;
+        /* Clip Path Corner */
+        clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
       }
-      @keyframes shake {
-        10%,
-        90% {
-          transform: translate3d(-1px, 0, 0);
-        }
-        20%,
-        80% {
-          transform: translate3d(2px, 0, 0);
-        }
-        30%,
-        50%,
-        70% {
-          transform: translate3d(-4px, 0, 0);
-        }
-        40%,
-        60% {
-          transform: translate3d(4px, 0, 0);
-        }
+      .btn-cyber:hover {
+        background: var(--neon-blue);
+        color: #000;
+        box-shadow: 0 0 30px var(--neon-blue);
+      }
+      .btn-cyber:active {
+        transform: scale(0.98);
+      }
+
+      /* Logo */
+      .logo-display {
+        width: 80px;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 0 10px var(--neon-purple));
       }
     </style>
   </head>
   <body>
-    <div class="scanlines"></div>
-    <div class="vignette"></div>
+    <div class="crt-overlay"></div>
 
-    <canvas id="matrixCanvas"></canvas>
+    <div class="cursor-dot" id="cDot"></div>
+    <div class="cursor-circle" id="cCircle"></div>
 
-    <div class="container" id="mainContainer">
-      <div class="logo-container">
-        <img
-          src="/logo.png"
-          class="logo-img"
-          alt="Hawai"
-          onerror="this.style.display = 'none'"
-        />
-        <div
-          id="logoText"
-          style="
-            display: none;
-            color: var(--primary);
-            font-size: 3rem;
-            margin-bottom: 10px;
-          "
-        >
-          HW
-        </div>
+    <canvas id="vortex-canvas"></canvas>
+
+    <div class="boot-layer" id="bootLayer">
+      <div id="bootText"></div>
+    </div>
+
+    <div class="gate gate-top"><div class="gate-text">SYSTEM LOCKED</div></div>
+    <div class="gate gate-bottom">
+      <div class="gate-text">WAITING AUTH</div>
+    </div>
+
+    <div class="hud-container interactable" id="mainHud">
+      <div class="hud-line hl-top"></div>
+      <div class="hud-line hl-bottom"></div>
+
+      <img
+        src="/logo.png"
+        class="logo-display"
+        alt="HW"
+        onerror="this.style.display = 'none'"
+      />
+
+      <h1 class="glitch-title" data-text="DEPLOY THE FUTURE">
+        DEPLOY THE FUTURE
+      </h1>
+
+      <div class="status-panel">
+        <span id="statusLabel">ESTABLISHING UPLINK...</span>
+        <span id="pctLabel">0%</span>
       </div>
 
-      <div class="title" data-text="INITIALIZING">INITIALIZING</div>
-
-      <div class="bar-container">
-        <div class="bar-wrapper">
-          <div id="progressBar" class="bar-fill"></div>
-        </div>
-        <div class="stats-row">
-          <span id="pctText">0%</span>
-          <span>EST: <span id="timer">45</span>s</span>
-        </div>
+      <div class="bar-frame">
+        <div class="bar-fill" id="progressBar"></div>
       </div>
 
-      <div class="terminal" id="terminalBox">
-        <div class="log-entry">
-          > Connecting to Hawai Satellite [Encrypted]...
-        </div>
+      <div class="terminal-box" id="termBox">
+        <span class="log-line">> Initializing UI...</span>
       </div>
 
-      <button class="boost-btn" id="boostBtn" onclick="boostSpeed()">
-        ⚡ BOOST NETWORK
+      <button
+        class="btn-cyber interactable"
+        id="boostBtn"
+        onclick="engageBoost()"
+      >
+        INITIALIZE BOOST
       </button>
     </div>
 
     <script>
-      // === 1. SETUP VARIABEL ===
-      const params = new URLSearchParams(window.location.search);
-      const targetUrl = params.get("url");
+      // === AUDIO SYNTHESIZER (SFX) ===
+      // Menggunakan Web Audio API untuk membuat suara tanpa file mp3 eksternal
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioCtx = new AudioContext();
 
-      const barEl = document.getElementById("progressBar");
-      const timerEl = document.getElementById("timer");
-      const pctEl = document.getElementById("pctText");
-      const terminalEl = document.getElementById("terminalBox");
-      const boostBtn = document.getElementById("boostBtn");
-      const container = document.getElementById("mainContainer");
+      class SoundFX {
+        constructor() {
+          this.osc = null;
+          this.gain = null;
+        }
 
-      // Jika image error, tampilkan teks
-      document
-        .querySelector(".logo-img")
-        .addEventListener("error", function () {
-          this.style.display = "none";
-          document.getElementById("logoText").style.display = "block";
-        });
+        playTone(freq, type, duration, vol = 0.1) {
+          if (audioCtx.state === "suspended") audioCtx.resume();
+          const osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
 
-      // === 2. ANIMASI BACKGROUND (MATRIX RAIN SEDERHANA) ===
-      const canvas = document.getElementById("matrixCanvas");
-      const ctx = canvas.getContext("2d");
+          osc.type = type; // 'sine', 'square', 'sawtooth', 'triangle'
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+          gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioCtx.currentTime + duration,
+          );
 
-      const chars = "010101HAWAIHOSTINGXY";
-      const fontSize = 14;
-      const columns = canvas.width / fontSize;
-      const drops = [];
+          osc.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
 
-      for (let x = 0; x < columns; x++) drops[x] = 1;
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        }
 
-      function drawMatrix() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; // Trail effect
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = "#00f3ff"; // Text color
-        ctx.font = fontSize + "px monospace";
-
-        for (let i = 0; i < drops.length; i++) {
-          const text = chars.charAt(Math.floor(Math.random() * chars.length));
-          ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
-          }
-          drops[i]++;
+        playHover() {
+          this.playTone(400, "sine", 0.1, 0.05);
+        }
+        playClick() {
+          this.playTone(1200, "square", 0.1, 0.05);
+        }
+        playBoot() {
+          // Swipe effect
+          if (audioCtx.state === "suspended") return;
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(
+            800,
+            audioCtx.currentTime + 0.5,
+          );
+          gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioCtx.currentTime + 0.5,
+          );
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.5);
         }
       }
-      setInterval(drawMatrix, 50);
+      const sfx = new SoundFX();
 
-      // Resize handler
-      window.addEventListener("resize", () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+      // === CUSTOM CURSOR LOGIC ===
+      const dot = document.getElementById("cDot");
+      const circle = document.getElementById("cCircle");
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+      let circleX = mouseX;
+      let circleY = mouseY;
+
+      document.addEventListener("mousemove", (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        dot.style.left = mouseX + "px";
+        dot.style.top = mouseY + "px";
       });
 
-      // === 3. LOGIC LOADING & TERMINAL ===
-      const logMessages = [
-        "Handshaking with satellite node...",
-        "Verifying SSL handshake...",
-        "Allocating memory blocks...",
-        "Optimizing assets (Gzip)...",
-        "Connecting to CDN edge...",
-        "Bypassing firewall rules...",
-        "Injecting dependencies...",
-        "Finalizing build sequence...",
-        "Clearing cache buffers...",
-        "Ready to launch.",
+      // Lerp animation for smooth trailing circle
+      function animateCursor() {
+        circleX += (mouseX - circleX) * 0.15;
+        circleY += (mouseY - circleY) * 0.15;
+        circle.style.left = circleX + "px";
+        circle.style.top = circleY + "px";
+        requestAnimationFrame(animateCursor);
+      }
+      animateCursor();
+
+      // Interactive Elements Hover
+      document.querySelectorAll(".interactable").forEach((el) => {
+        el.addEventListener("mouseenter", () => {
+          document.body.classList.add("hovering");
+          sfx.playHover();
+        });
+        el.addEventListener("mouseleave", () => {
+          document.body.classList.remove("hovering");
+        });
+      });
+
+      // === BOOT SEQUENCE & GATES ===
+      const bootTextEl = document.getElementById("bootText");
+      const bootLines = [
+        "BIOS DATE 01/18/26 20:15:26 VER 1.0.4",
+        "CPU: HAWAI-QUANTUM @ 40GHz",
+        "DETECTING PRIMARY DRIVES... DONE",
+        "LOADING KERNEL... SUCCESS",
+        "DECRYPTING SECURITY KEYS...",
+        "................................",
+        "ACCESS GRANTED.",
       ];
 
+      let lineIndex = 0;
+      function runBoot() {
+        if (lineIndex < bootLines.length) {
+          const div = document.createElement("div");
+          div.className = "boot-log";
+          div.innerText = bootLines[lineIndex];
+          bootTextEl.appendChild(div);
+
+          lineIndex++;
+          setTimeout(runBoot, 300); // Kecepatan ketik
+        } else {
+          // Boot Selesai -> Buka Gerbang
+          setTimeout(() => {
+            sfx.playBoot();
+            document.body.classList.add("access-granted");
+            startMainProcess();
+          }, 800);
+        }
+      }
+      // Start Boot immediately
+      window.onload = runBoot;
+
+      // === MAIN LOGIC (DEPLOYMENT) ===
+      const progressBar = document.getElementById("progressBar");
+      const pctLabel = document.getElementById("pctLabel");
+      const termBox = document.getElementById("termBox");
+      const statusLabel = document.getElementById("statusLabel");
+      const boostBtn = document.getElementById("boostBtn");
+
       let progress = 0;
-      let totalTime = 45000; // 45 detik
-      let intervalSpeed = 100;
-      let currentSpeedMultiplier = 1;
-      let step = 100 / (totalTime / intervalSpeed);
-      let nextLogThreshold = 10;
-      let logIndex = 0;
+      let speed = 0.2; // Base speed
+      let deployInterval;
+
+      const logs = [
+        "Resolving host...",
+        "Optimizing assets...",
+        "Minifying CSS/JS...",
+        "Connecting to satellite...",
+        "Uploading to Edge...",
+        "Verifying integrity...",
+        "Clearing cache...",
+      ];
+      let logIdx = 0;
 
       function addLog(msg) {
-        const div = document.createElement("div");
-        div.className = "log-entry latest";
-        div.innerText = `> ${msg}`;
-
-        // Remove 'latest' class from previous siblings
-        const prev = terminalEl.querySelectorAll(".latest");
-        prev.forEach((el) => el.classList.remove("latest"));
-
-        terminalEl.appendChild(div);
-        terminalEl.scrollTop = terminalEl.scrollHeight; // Auto scroll
+        const span = document.createElement("span");
+        span.className = "log-line new";
+        span.innerText = `> ${msg}`;
+        termBox.appendChild(span);
+        termBox.scrollTop = termBox.scrollHeight;
       }
 
-      const timerInterval = setInterval(() => {
-        // Logic percepatan
-        progress += step * currentSpeedMultiplier;
+      function startMainProcess() {
+        deployInterval = setInterval(() => {
+          progress += speed;
 
-        // Visual Update
-        const visualPct = Math.min(progress, 100);
-        barEl.style.width = visualPct + "%";
-        pctEl.innerText = Math.floor(visualPct) + "%";
+          if (progress >= 100) progress = 100;
 
-        // Hitung waktu sisa
-        const remainingMs = Math.max(
-          0,
-          ((100 - progress) / (step * currentSpeedMultiplier)) * intervalSpeed,
-        );
-        timerEl.innerText = Math.ceil(remainingMs / 1000);
+          // Update UI
+          progressBar.style.width = progress + "%";
+          pctLabel.innerText = Math.floor(progress) + "%";
 
-        // Tambah log otomatis berdasarkan progress
-        if (progress > nextLogThreshold && logIndex < logMessages.length) {
-          addLog(logMessages[logIndex]);
-          logIndex++;
-          nextLogThreshold += 10; // Tiap 10% nambah log
-        }
-
-        // Selesai
-        if (progress >= 100) {
-          clearInterval(timerInterval);
-          finishDeployment();
-        }
-      }, intervalSpeed);
-
-      // === 4. INTERACTIVE BOOST ===
-      function boostSpeed() {
-        if (currentSpeedMultiplier > 10) return; // Max speed limit
-
-        currentSpeedMultiplier += 2; // Tambah kecepatan
-        boostBtn.innerText = `SPEED: ${currentSpeedMultiplier}x`;
-
-        addLog(`USER OVERRIDE: CPU OVERCLOCK [${currentSpeedMultiplier}x]`);
-
-        // Efek Visual Shake
-        container.classList.remove("shake");
-        void container.offsetWidth; // Trigger reflow
-        container.classList.add("shake");
-
-        // Ganti warna sementara
-        document.documentElement.style.setProperty("--primary", "#ff0055");
-        setTimeout(() => {
-          document.documentElement.style.setProperty("--primary", "#00f3ff");
-        }, 300);
-      }
-
-      function finishDeployment() {
-        pctEl.innerText = "100%";
-        timerEl.innerText = "0";
-        document.querySelector(".title").innerText = "DEPLOYED";
-        document.querySelector(".title").setAttribute("data-text", "DEPLOYED");
-        boostBtn.style.display = "none";
-
-        addLog("SUCCESS: Redirecting to target...");
-
-        barEl.style.background = "#0f0";
-        barEl.style.boxShadow = "0 0 50px #0f0";
-
-        setTimeout(() => {
-          if (targetUrl) {
-            window.location.href = targetUrl;
-          } else {
-            addLog("ERROR: NO TARGET URL FOUND.");
+          // Random Logs
+          if (Math.random() > 0.95 && logIdx < logs.length) {
+            addLog(logs[logIdx]);
+            logIdx++;
           }
+
+          if (progress >= 100) {
+            clearInterval(deployInterval);
+            finish();
+          }
+        }, 30); // 30ms tick
+      }
+
+      function engageBoost() {
+        sfx.playClick();
+        speed = 1.5; // Boost speed significantly
+        statusLabel.innerText = "OVERCLOCKING NETWORK...";
+        statusLabel.style.color = "var(--neon-purple)";
+        boostBtn.innerText = "ACCELERATED";
+        boostBtn.style.opacity = "0.5";
+        boostBtn.style.pointerEvents = "none";
+        addLog("USER INTERVENTION: SPEED BOOST ACTIVE");
+
+        // Shake Effect
+        document.getElementById("mainHud").style.transform =
+          "translate(2px, 2px)";
+        setTimeout(
+          () =>
+            (document.getElementById("mainHud").style.transform =
+              "translate(0,0)"),
+          100,
+        );
+      }
+
+      function finish() {
+        statusLabel.innerText = "DEPLOYMENT COMPLETE";
+        statusLabel.style.color = "var(--neon-green)";
+        document
+          .querySelector(".glitch-title")
+          .setAttribute("data-text", "ONLINE");
+        document.querySelector(".glitch-title").innerText = "SYSTEM ONLINE";
+
+        addLog("REDIRECTING...");
+
+        const params = new URLSearchParams(window.location.search);
+        const target = params.get("url");
+
+        setTimeout(() => {
+          if (target) window.location.href = target;
+          else addLog("ERROR: NO TARGET URL");
         }, 1500);
       }
+
+      // === CANVAS PARTICLES ===
+      const cvs = document.getElementById("vortex-canvas");
+      const ctx = cvs.getContext("2d");
+
+      let width, height;
+      function resize() {
+        width = cvs.width = window.innerWidth;
+        height = cvs.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resize);
+      resize();
+
+      const particles = [];
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.vx = (Math.random() - 0.5) * 0.5;
+          this.vy = (Math.random() - 0.5) * 0.5;
+          this.size = Math.random() * 2;
+          this.color = Math.random() > 0.5 ? "#00f3ff" : "#bc13fe";
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          if (this.x < 0 || this.x > width) this.vx *= -1;
+          if (this.y < 0 || this.y > height) this.vy *= -1;
+        }
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = 0.5;
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < 50; i++) particles.push(new Particle());
+
+      function animateBG() {
+        ctx.clearRect(0, 0, width, height);
+        particles.forEach((p) => {
+          p.update();
+          p.draw();
+        });
+
+        // Connect lines
+        particles.forEach((p1, i) => {
+          particles.slice(i + 1).forEach((p2) => {
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 100) {
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              ctx.strokeStyle = `rgba(0, 243, 255, ${1 - dist / 100})`;
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
+          });
+        });
+        requestAnimationFrame(animateBG);
+      }
+      animateBG();
     </script>
   </body>
 </html>
