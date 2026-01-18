@@ -1,30 +1,30 @@
-// server.js (Vercel Edition)
+// server.js (Vercel & Isomorphic-Git Edition)
 require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const AdmZip = require("adm-zip");
-const simpleGit = require("simple-git");
+const git = require("isomorphic-git");
+const http = require("isomorphic-git/http/node");
 const axios = require("axios");
 const fs = require("fs-extra");
 const path = require("path");
 const cors = require("cors");
-const os = require("os"); // Penting untuk Vercel
+const os = require("os");
 
 const app = express();
 app.use(cors());
 app.use(express.static("public"));
-// --- RUTE HALAMAN DEPAN (WAJIB BUAT VERCEL) ---
+
+// --- RUTE HALAMAN DEPAN ---
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // --- KONFIGURASI PATH VERCEL (/tmp) ---
-// Vercel hanya membolehkan tulis data di folder /tmp
 const TMP_DIR = os.tmpdir();
 const UPLOAD_DIR = path.join(TMP_DIR, "uploads");
 const EXTRACT_DIR = path.join(TMP_DIR, "temp");
 
-// Pastikan folder temp ada
 fs.ensureDirSync(UPLOAD_DIR);
 fs.ensureDirSync(EXTRACT_DIR);
 
@@ -105,40 +105,57 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       throw new Error("index.html tidak ditemukan di root file zip!");
     }
 
-    // 3. GITHUB REPO
+    // 3. GITHUB REPO (Create if not exists)
     try {
       await axios.post(
         "https://api.github.com/user/repos",
         {
           name: hawaiName,
           private: false,
-          auto_init: true,
+          auto_init: true, // auto_init creates a commit
         },
         { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
+      await delay(2000); // Wait for repo creation
     } catch (e) {
-      /* Ignore if exists */
+      console.log("Repo might already exist, continuing...");
     }
 
-    // 4. GIT OPERATIONS (Using simple-git in /tmp)
-    const git = simpleGit(extractPath);
-    await git
-      .init()
-      .addConfig("user.name", "HawaiBot")
-      .addConfig("user.email", "bot@hawai.id");
+    // 4. GIT OPERATIONS (ISOMORPHIC-GIT)
+    // Init Git di folder temp
+    await git.init({ fs, dir: extractPath });
 
-    try {
-      await git.raw(["branch", "-M", "main"]);
-    } catch (e) {}
-    await git.add(".");
-    await git.commit("Auto Deploy");
-    try {
-      await git.addRemote(
-        "origin",
-        `https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${hawaiName}.git`,
-      );
-    } catch (e) {}
-    await git.push(["-u", "origin", "main", "--force"]);
+    // Add All Files
+    const fileList = await fs.readdir(extractPath); // Simple readdir for now, ideally walk
+    // Note: isomorphic-git add . is not direct, using a glob pattern loop is safer or just specific files
+    // For simplicity in this env, we use add '.' equivalent logic:
+    await git.add({ fs, dir: extractPath, filepath: "." });
+
+    // Commit
+    await git.commit({
+      fs,
+      dir: extractPath,
+      author: { name: "HawaiBot", email: "bot@hawai.id" },
+      message: "Auto Deploy from Hawai Hosting",
+    });
+
+    // Add Remote & Push
+    await git.addRemote({
+      fs,
+      dir: extractPath,
+      remote: "origin",
+      url: `https://github.com/${GITHUB_USER}/${hawaiName}.git`,
+    });
+
+    await git.push({
+      fs,
+      http,
+      dir: extractPath,
+      remote: "origin",
+      ref: "main",
+      onAuth: () => ({ username: GITHUB_TOKEN }),
+      force: true,
+    });
 
     // 5. CLOUDFLARE
     try {
@@ -161,7 +178,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
     } catch (e) {
-      /* Ignore if exists */
+      /* Ignore */
     }
 
     await delay(2000);
@@ -192,5 +209,4 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
   }
 });
 
-// PENTING UNTUK VERCEL: Export app, jangan app.listen
 module.exports = app;
