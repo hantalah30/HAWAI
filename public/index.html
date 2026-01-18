@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hawai Hosting 🌴 | Sonic Identity</title>
-
     <link rel="icon" type="image/png" href="../logo.png" />
 
     <link
@@ -21,6 +20,54 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
 
+    <script>
+      (function () {
+        // 1. DISABLE RIGHT CLICK
+        document.addEventListener(
+          "contextmenu",
+          function (e) {
+            e.preventDefault();
+          },
+          false,
+        );
+
+        // 2. DISABLE SHORTCUT KEYS (F12, Ctrl+Shift+I, Ctrl+U, etc.)
+        document.addEventListener("keydown", function (e) {
+          // F12
+          if (e.keyCode == 123) {
+            e.preventDefault();
+            return false;
+          }
+          // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Element)
+          if (
+            e.ctrlKey &&
+            e.shiftKey &&
+            (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)
+          ) {
+            e.preventDefault();
+            return false;
+          }
+          // Ctrl+U (View Source)
+          if (e.ctrlKey && e.keyCode == 85) {
+            e.preventDefault();
+            return false;
+          }
+        });
+
+        // 3. DEBUGGER TRAP (Membuat Browser Hang jika Inspect dibuka)
+        setInterval(function () {
+          var startTime = performance.now();
+          debugger;
+          var endTime = performance.now();
+          if (endTime - startTime > 100) {
+            // Jika user berhasil bypass debugger, redirect atau clear body
+            document.body.innerHTML =
+              '<div style="color:red; background:black; height:100vh; display:flex; justify-content:center; align-items:center; font-family:monospace; font-size:2rem;">ACCESS DENIED // SYSTEM BREACH DETECTED</div>';
+          }
+        }, 100);
+      })();
+    </script>
+
     <style>
       :root {
         --neon-blue: #00f3ff;
@@ -31,8 +78,6 @@
         --glass: rgba(255, 255, 255, 0.03);
         --border: rgba(255, 255, 255, 0.08);
       }
-
-      /* --- CUSTOM SCROLLBAR --- */
       ::-webkit-scrollbar {
         width: 8px;
       }
@@ -52,14 +97,16 @@
       ::-webkit-scrollbar-thumb:hover {
         background: white;
       }
-
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
         cursor: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none; /* Mencegah blok teks */
       }
-
       body {
         background-color: var(--void);
         color: white;
@@ -67,7 +114,7 @@
         overflow-x: hidden;
       }
 
-      /* --- START SCREEN (UPDATED WITH "HAWAI" TEXT) --- */
+      /* --- START SCREEN --- */
       .start-overlay {
         position: fixed;
         inset: 0;
@@ -101,26 +148,6 @@
           text-shadow: 0 0 50px var(--neon-blue);
         }
       }
-
-      .start-btn {
-        border: 1px solid var(--neon-blue);
-        padding: 20px 50px;
-        color: var(--neon-blue);
-        font-family: "Syncopate";
-        font-weight: 700;
-        letter-spacing: 3px;
-        font-size: 1rem;
-        background: rgba(0, 243, 255, 0.05);
-        transition: 0.3s;
-        position: relative;
-        overflow: hidden;
-      }
-      .start-btn:hover {
-        background: var(--neon-blue);
-        color: black;
-        box-shadow: 0 0 50px var(--neon-blue);
-      }
-
       .start-text {
         font-family: "JetBrains Mono";
         color: #666;
@@ -225,7 +252,6 @@
         max-width: 1400px;
         margin: 0 auto;
       }
-
       .glitch-wrapper {
         position: relative;
         display: inline-block;
@@ -277,7 +303,6 @@
           clip-path: inset(5% 0 80% 0);
         }
       }
-
       .subtitle {
         font-size: 1.1rem;
         color: #888;
@@ -296,6 +321,7 @@
         box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
         position: relative;
         overflow: hidden;
+        pointer-events: auto;
       }
       .warning-box {
         background: rgba(252, 238, 10, 0.05);
@@ -320,7 +346,6 @@
       .warning-text strong {
         color: var(--neon-yellow);
       }
-
       .input-line {
         width: 100%;
         background: transparent;
@@ -333,12 +358,12 @@
         padding: 15px 0;
         outline: none;
         transition: 0.3s;
+        pointer-events: auto;
       }
       .input-line:focus {
         border-color: var(--neon-blue);
         text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
       }
-
       .upload-hex {
         margin-top: 20px;
         border: 1px dashed #444;
@@ -347,6 +372,7 @@
         transition: 0.3s;
         position: relative;
         background: rgba(0, 0, 0, 0.2);
+        pointer-events: auto;
       }
       .upload-hex:hover {
         border-color: var(--neon-green);
@@ -358,7 +384,6 @@
         opacity: 0;
         cursor: pointer;
       }
-
       .btn-cyber {
         margin-top: 30px;
         width: 100%;
@@ -371,12 +396,12 @@
         cursor: none;
         clip-path: polygon(0 0, 100% 0, 100% 80%, 95% 100%, 0 100%);
         transition: 0.3s;
+        pointer-events: auto;
       }
       .btn-cyber:hover {
         background: var(--neon-blue);
         clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
       }
-
       .quantum-loader {
         display: none;
         width: 100%;
@@ -428,6 +453,7 @@
         line-height: 1;
         margin-bottom: 10px;
         color: white;
+        pointer-events: auto;
       }
       .bio-role {
         font-family: "Syncopate";
@@ -444,9 +470,9 @@
         color: #ccc;
         margin-bottom: 40px;
       }
-
       .skill-group {
         margin-bottom: 15px;
+        pointer-events: auto;
       }
       .skill-info {
         display: flex;
@@ -468,13 +494,13 @@
         box-shadow: 0 0 10px var(--neon-blue);
         width: 0;
       }
-
       .photo-container {
         position: relative;
         padding: 20px;
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.02);
         backdrop-filter: blur(10px);
+        pointer-events: auto;
       }
       .photo-container::before {
         content: "";
@@ -496,7 +522,6 @@
         border-bottom: 2px solid var(--neon-blue);
         border-right: 2px solid var(--neon-blue);
       }
-
       .profile-img {
         width: 100%;
         height: 600px;
@@ -508,7 +533,6 @@
       .photo-container:hover .profile-img {
         filter: grayscale(0%) contrast(1);
       }
-
       .data-box {
         position: absolute;
         bottom: 40px;
@@ -532,6 +556,24 @@
       }
 
       @media (max-width: 1000px) {
+        .cursor-dot,
+        .cursor-circle {
+          display: none !important; /* Ilangin bola-bola kursor */
+        }
+
+        * {
+          cursor: auto !important; /* Balikin ke mode sentuh normal */
+        }
+
+        /* Matikan efek hover yang suka nyangkut di HP */
+        .start-btn:hover,
+        .btn-cyber:hover,
+        .logo-img:hover {
+          transform: none !important;
+          box-shadow: none !important;
+          filter: none !important;
+        }
+
         .hero-container,
         .identity-container {
           grid-template-columns: 1fr;
@@ -563,8 +605,17 @@
   <body>
     <div class="start-overlay" id="startScreen">
       <div class="intro-title">HAWAI</div>
-
-      <div class="boot-btn">INITIALIZE SYSTEM</div>
+      <div
+        class="boot-btn"
+        style="
+          border: 1px solid var(--neon-blue);
+          padding: 10px 30px;
+          color: var(--neon-blue);
+          font-family: &quot;Syncopate&quot;;
+        "
+      >
+        INITIALIZE SYSTEM
+      </div>
       <div class="start-text">CLICK TO ENGAGE AUDIO</div>
     </div>
 
@@ -650,8 +701,10 @@
           >
             <div class="warning-box">
               <i class="ri-alert-fill warning-icon"></i>
+
               <div class="warning-text">
                 <strong>SYSTEM NOTICE:</strong><br />
+
                 Platform only supports <strong>Static Files</strong> (HTML, CSS,
                 JS). PHP/Python/Ruby scripts are not executable.
               </div>
@@ -674,7 +727,6 @@
                 required
                 autocomplete="off"
               />
-
               <div class="upload-hex hover-trigger" id="dropArea">
                 <i
                   class="ri-upload-cloud-fill"
@@ -700,7 +752,6 @@
                   required
                 />
               </div>
-
               <button type="submit" class="btn-cyber hover-trigger">
                 ESTABLISH UPLINK
               </button>
@@ -709,7 +760,6 @@
             <div class="quantum-loader" id="loading">
               <div class="quantum-bar" id="progressBar"></div>
             </div>
-
             <div class="success-terminal" id="resultBox">
               <div style="font-size: 2rem; margin-bottom: 10px">✅</div>
               <div>DEPLOYMENT SUCCESSFUL</div>
@@ -737,14 +787,12 @@
           <span class="bio-label">// OPERATOR_ID</span>
           <h2 class="bio-name hover-trigger">HANUNG TRI ATMOJO</h2>
           <div class="bio-role">FULLSTACK DEVELOPER</div>
-
           <p class="bio-desc">
-            Mahasiswa Sistem Informasi Semester 3. Saya menggabungkan logika
-            pemrograman yang kuat dengan estetika futuristik. Misi saya adalah
-            membangun jembatan antara kode yang kompleks dan pengalaman pengguna
-            yang mulus di seluruh semesta digital.
+            Anak SI Semester 3 yang hidup di antara
+            <code>&lt;code&gt;</code> dan <em>art</em>. Hobi ngerakit logika
+            ribet biar lu bisa <em>scrolling</em> dengan smooth. Less error,
+            more aesthetic.
           </p>
-
           <div class="skills">
             <div
               style="
@@ -756,7 +804,6 @@
             >
               MODULES LOADED:
             </div>
-
             <div class="skill-group hover-trigger">
               <div class="skill-info">
                 <span>NODE.JS / BACKEND</span><span>90%</span>
@@ -786,7 +833,6 @@
 
         <div class="photo-container hover-trigger" data-tilt>
           <img src="../hanung4.jpeg" class="profile-img" alt="Hanung" />
-
           <div class="data-box">
             <div class="data-row">
               <span>STATUS:</span><span class="data-val">ONLINE</span>
@@ -803,96 +849,89 @@
     </section>
 
     <script>
-      // --- 1. SOUND ENGINE (WEB AUDIO API) ---
+      /* ⚠️ WARNING: CORE LOGIC 
+       Do not attempt to reverse engineer.
+       Logic is minified for performance.
+    */
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       let audioCtx;
-
       const SoundFX = {
         hover: () => {
           if (!audioCtx) return;
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(
-            1200,
-            audioCtx.currentTime + 0.05,
-          );
-          gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(
-            0.001,
-            audioCtx.currentTime + 0.05,
-          );
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.05);
+          const e = audioCtx.createOscillator(),
+            t = audioCtx.createGain();
+          ((e.type = "sine"),
+            e.frequency.setValueAtTime(800, audioCtx.currentTime),
+            e.frequency.exponentialRampToValueAtTime(
+              1200,
+              audioCtx.currentTime + 0.05,
+            ),
+            t.gain.setValueAtTime(0.02, audioCtx.currentTime),
+            t.gain.exponentialRampToValueAtTime(
+              1e-3,
+              audioCtx.currentTime + 0.05,
+            ),
+            e.connect(t),
+            t.connect(audioCtx.destination),
+            e.start(),
+            e.stop(audioCtx.currentTime + 0.05));
         },
         click: () => {
           if (!audioCtx) return;
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = "square";
-          osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(
-            40,
-            audioCtx.currentTime + 0.1,
-          );
-          gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(
-            0.001,
-            audioCtx.currentTime + 0.1,
-          );
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.1);
+          const e = audioCtx.createOscillator(),
+            t = audioCtx.createGain();
+          ((e.type = "square"),
+            e.frequency.setValueAtTime(150, audioCtx.currentTime),
+            e.frequency.exponentialRampToValueAtTime(
+              40,
+              audioCtx.currentTime + 0.1,
+            ),
+            t.gain.setValueAtTime(0.05, audioCtx.currentTime),
+            t.gain.exponentialRampToValueAtTime(
+              1e-3,
+              audioCtx.currentTime + 0.1,
+            ),
+            e.connect(t),
+            t.connect(audioCtx.destination),
+            e.start(),
+            e.stop(audioCtx.currentTime + 0.1));
         },
         success: () => {
           if (!audioCtx) return;
-          const playNote = (freq, delay) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = "triangle";
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0, audioCtx.currentTime + delay);
-            gain.gain.linearRampToValueAtTime(
-              0.05,
-              audioCtx.currentTime + delay + 0.05,
-            );
-            gain.gain.exponentialRampToValueAtTime(
-              0.001,
-              audioCtx.currentTime + delay + 0.5,
-            );
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(audioCtx.currentTime + delay);
-            osc.stop(audioCtx.currentTime + delay + 0.5);
+          const e = (e, t) => {
+            const n = audioCtx.createOscillator(),
+              o = audioCtx.createGain();
+            ((n.type = "triangle"),
+              (n.frequency.value = e),
+              o.gain.setValueAtTime(0, audioCtx.currentTime + t),
+              o.gain.linearRampToValueAtTime(
+                0.05,
+                audioCtx.currentTime + t + 0.05,
+              ),
+              o.gain.exponentialRampToValueAtTime(
+                1e-3,
+                audioCtx.currentTime + t + 0.5,
+              ),
+              n.connect(o),
+              o.connect(audioCtx.destination),
+              n.start(audioCtx.currentTime + t),
+              n.stop(audioCtx.currentTime + t + 0.5));
           };
-          playNote(440, 0);
-          playNote(554, 0.1);
-          playNote(659, 0.2);
+          (e(440, 0), e(554, 0.1), e(659, 0.2));
         },
       };
-
-      // --- 2. BOOT SEQUENCE ---
       const startScreen = document.getElementById("startScreen");
       startScreen.addEventListener("click", () => {
-        // Init Audio
-        audioCtx = new AudioContext();
-        SoundFX.click();
-        SoundFX.success();
-
-        // Animate Out
-        gsap.to(startScreen, {
-          opacity: 0,
-          duration: 0.8,
-          onComplete: () => (startScreen.style.display = "none"),
-        });
-
-        // Animate In Main
-        const tl = gsap.timeline();
-        tl.from(".hero-content > *", {
+        ((audioCtx = new AudioContext()),
+          SoundFX.click(),
+          SoundFX.success(),
+          gsap.to(startScreen, {
+            opacity: 0,
+            duration: 0.8,
+            onComplete: () => (startScreen.style.display = "none"),
+          }));
+        const e = gsap.timeline();
+        e.from(".hero-content > *", {
           y: 50,
           opacity: 0,
           stagger: 0.1,
@@ -904,203 +943,175 @@
           "-=0.8",
         );
       });
-
-      // --- 3. VORTEX PARTICLE SYSTEM (COLORFUL) ---
-      const canvas = document.getElementById("vortex-canvas");
-      const ctx = canvas.getContext("2d");
-      let width, height;
-      let particles = [];
-
+      const canvas = document.getElementById("vortex-canvas"),
+        ctx = canvas.getContext("2d");
+      let width,
+        height,
+        particles = [];
       function resize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
+        ((width = window.innerWidth),
+          (height = window.innerHeight),
+          (canvas.width = width),
+          (canvas.height = height));
       }
-      window.addEventListener("resize", resize);
-      resize();
-
+      (window.addEventListener("resize", resize), resize());
       class Particle {
         constructor() {
           this.reset();
         }
         reset() {
-          this.x = Math.random() * width;
-          this.y = Math.random() * height;
-          this.z = Math.random() * 2 + 0.5;
-          this.vx = (Math.random() - 0.5) * 0.2;
-          this.vy = (Math.random() - 0.5) * 0.2;
-          const hue = Math.random() * 360;
-          this.color = `hsla(${hue}, 100%, 60%, `;
+          ((this.x = Math.random() * width),
+            (this.y = Math.random() * height),
+            (this.z = 2 * Math.random() + 0.5),
+            (this.vx = 0.2 * (Math.random() - 0.5)),
+            (this.vy = 0.2 * (Math.random() - 0.5)));
+          const e = 360 * Math.random();
+          this.color = `hsla(${e}, 100%, 60%, `;
         }
         update() {
-          const dx = width / 2 - this.x;
-          const dy = height / 2 - this.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          this.x += (dx / dist) * this.z * 1.5;
-          this.y += (dy / dist) * this.z * 1.5;
-          this.x += -dy * 0.002;
-          this.y += dx * 0.002;
-          if (
-            dist < 10 ||
-            this.x < 0 ||
-            this.x > width ||
-            this.y < 0 ||
-            this.y > height
-          ) {
-            this.reset();
-            if (Math.random() > 0.5) {
-              this.x = Math.random() > 0.5 ? 0 : width;
-              this.y = Math.random() * height;
-            } else {
-              this.x = Math.random() * width;
-              this.y = Math.random() > 0.5 ? 0 : height;
-            }
-          }
+          const e = width / 2 - this.x,
+            t = height / 2 - this.y,
+            n = Math.sqrt(e * e + t * t);
+          ((this.x += (e / n) * this.z * 1.5),
+            (this.y += (t / n) * this.z * 1.5),
+            (this.x += -0.002 * t),
+            (this.y += 0.002 * e),
+            (n < 10 ||
+              this.x < 0 ||
+              this.x > width ||
+              this.y < 0 ||
+              this.y > height) &&
+              (this.reset(),
+              Math.random() > 0.5
+                ? ((this.x = Math.random() > 0.5 ? 0 : width),
+                  (this.y = Math.random() * height))
+                : ((this.x = Math.random() * width),
+                  (this.y = Math.random() > 0.5 ? 0 : height))));
         }
         draw() {
-          const distToCenter = Math.sqrt(
-            (width / 2 - this.x) ** 2 + (height / 2 - this.y) ** 2,
-          );
-          const alpha = Math.min(distToCenter / (width / 3), 1);
-          ctx.fillStyle = this.color + alpha * 0.8 + ")";
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.z, 0, Math.PI * 2);
-          ctx.fill();
+          const e = Math.sqrt(
+              (width / 2 - this.x) ** 2 + (height / 2 - this.y) ** 2,
+            ),
+            t = Math.min(e / (width / 3), 1);
+          ((ctx.fillStyle = this.color + 0.8 * t + ")"),
+            ctx.beginPath(),
+            ctx.arc(this.x, this.y, this.z, 0, 2 * Math.PI),
+            ctx.fill());
         }
       }
-      for (let i = 0; i < 250; i++) particles.push(new Particle());
+      for (let e = 0; e < 250; e++) particles.push(new Particle());
       function animate() {
-        ctx.fillStyle = "rgba(2, 2, 4, 0.1)";
-        ctx.fillRect(0, 0, width, height);
-        particles.forEach((p) => {
-          p.update();
-          p.draw();
-        });
-        requestAnimationFrame(animate);
+        ((ctx.fillStyle = "rgba(2, 2, 4, 0.1)"),
+          ctx.fillRect(0, 0, width, height),
+          particles.forEach((e) => {
+            (e.update(), e.draw());
+          }),
+          requestAnimationFrame(animate));
       }
       animate();
-
-      // --- 4. CURSOR & INTERACTION ---
-      const cursorDot = document.querySelector(".cursor-dot");
-      const cursorCircle = document.querySelector(".cursor-circle");
-      document.addEventListener("mousemove", (e) => {
-        gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.1 });
-        gsap.to(cursorCircle, {
-          x: e.clientX - 20,
-          y: e.clientY - 20,
-          duration: 0.3,
-        });
-      });
-
-      document
-        .querySelectorAll(".hover-trigger, button, input")
-        .forEach((el) => {
-          el.addEventListener("mouseenter", () => {
-            document.body.classList.add("hover-active");
-            SoundFX.hover();
-          });
-          el.addEventListener("mouseleave", () =>
-            document.body.classList.remove("hover-active"),
-          );
-          el.addEventListener("click", () => SoundFX.click());
-        });
-
-      // GSAP Scroll Animations
-      gsap.registerPlugin(ScrollTrigger);
-      gsap.from(".bio-wrapper > *", {
-        scrollTrigger: { trigger: ".bio-wrapper", start: "top 80%" },
-        y: 50,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.1,
-        ease: "power3.out",
-      });
-      gsap.from(".photo-container", {
-        scrollTrigger: { trigger: ".photo-container", start: "top 80%" },
-        x: 50,
-        opacity: 0,
-        duration: 1,
-        ease: "power3.out",
-      });
-      gsap.from(".skill-fill", {
-        scrollTrigger: { trigger: ".skills", start: "top 85%" },
-        width: 0,
-        duration: 1.5,
-        ease: "power2.out",
-        stagger: 0.2,
-      });
-
-      // --- 5. UPLOAD LOGIC ---
-      const fileInput = document.getElementById("pFile");
-      const dropArea = document.getElementById("dropArea");
-      const form = document.getElementById("deployForm");
-
-      fileInput.addEventListener("change", () => {
-        if (fileInput.files.length > 0) {
-          document.getElementById("fileMsg").innerText =
-            fileInput.files[0].name;
-          document.getElementById("fileMsg").style.color = "var(--neon-green)";
-          document.getElementById("fileIcon").style.color = "var(--neon-green)";
-          dropArea.style.borderColor = "var(--neon-green)";
-          dropArea.style.background = "rgba(0, 255, 157, 0.05)";
-          SoundFX.success();
-        }
-      });
-
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        SoundFX.click();
-        form.style.display = "none";
-        document.getElementById("loading").style.display = "block";
-        const bar = document.getElementById("progressBar");
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += Math.random() * 3;
-          if (progress > 95) progress = 95;
-          bar.style.width = progress + "%";
-        }, 100);
-        const formData = new FormData();
-        formData.append("projectName", document.getElementById("pName").value);
-        formData.append("file", fileInput.files[0]);
-
-        try {
-          const res = await fetch("/deploy", {
-            method: "POST",
-            body: formData,
-          });
-          const data = await res.json();
-          clearInterval(interval);
-          bar.style.width = "100%";
-          setTimeout(() => {
-            document.getElementById("loading").style.display = "none";
-            if (data.success) {
-              document.getElementById("resultBox").style.display = "block";
-              // Arahkan ke halaman loading status dulu
-              document.getElementById("resultLink").href =
-                `/status.html?url=${data.url}`;
-              SoundFX.success();
-              confetti({
-                particleCount: 200,
-                spread: 150,
-                colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
-              });
-            } else {
-              alert("Error: " + data.error);
-              location.reload();
-            }
-          }, 800);
-        } catch (err) {
-          alert("Connection Error");
-          location.reload();
-        }
-      });
-
-      VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
-        max: 10,
-        speed: 400,
-        gyroscope: true,
-      });
+      const cursorDot = document.querySelector(".cursor-dot"),
+        cursorCircle = document.querySelector(".cursor-circle");
+      (document.addEventListener("mousemove", (e) => {
+        (gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.1 }),
+          gsap.to(cursorCircle, {
+            x: e.clientX - 20,
+            y: e.clientY - 20,
+            duration: 0.3,
+          }));
+      }),
+        document
+          .querySelectorAll(".hover-trigger, button, input")
+          .forEach((e) => {
+            (e.addEventListener("mouseenter", () => {
+              (document.body.classList.add("hover-active"), SoundFX.hover());
+            }),
+              e.addEventListener("mouseleave", () =>
+                document.body.classList.remove("hover-active"),
+              ),
+              e.addEventListener("click", () => SoundFX.click()));
+          }),
+        gsap.registerPlugin(ScrollTrigger),
+        gsap.from(".bio-wrapper > *", {
+          scrollTrigger: { trigger: ".bio-wrapper", start: "top 80%" },
+          y: 50,
+          opacity: 0,
+          duration: 1,
+          stagger: 0.1,
+          ease: "power3.out",
+        }),
+        gsap.from(".photo-container", {
+          scrollTrigger: { trigger: ".photo-container", start: "top 80%" },
+          x: 50,
+          opacity: 0,
+          duration: 1,
+          ease: "power3.out",
+        }),
+        gsap.from(".skill-fill", {
+          scrollTrigger: { trigger: ".skills", start: "top 85%" },
+          width: 0,
+          duration: 1.5,
+          ease: "power2.out",
+          stagger: 0.2,
+        }));
+      const fileInput = document.getElementById("pFile"),
+        dropArea = document.getElementById("dropArea"),
+        form = document.getElementById("deployForm");
+      (fileInput.addEventListener("change", () => {
+        fileInput.files.length > 0 &&
+          ((document.getElementById("fileMsg").innerText =
+            fileInput.files[0].name),
+          (document.getElementById("fileMsg").style.color =
+            "var(--neon-green)"),
+          (document.getElementById("fileIcon").style.color =
+            "var(--neon-green)"),
+          (dropArea.style.borderColor = "var(--neon-green)"),
+          (dropArea.style.background = "rgba(0, 255, 157, 0.05)"),
+          SoundFX.success());
+      }),
+        form.addEventListener("submit", async (e) => {
+          (e.preventDefault(),
+            SoundFX.click(),
+            (form.style.display = "none"),
+            (document.getElementById("loading").style.display = "block"));
+          const t = document.getElementById("progressBar");
+          let n = 0;
+          const o = setInterval(() => {
+              ((n += 3 * Math.random()),
+                n > 95 && (n = 95),
+                (t.style.width = n + "%"));
+            }, 100),
+            r = new FormData();
+          (r.append("projectName", document.getElementById("pName").value),
+            r.append("file", fileInput.files[0]));
+          try {
+            const e = await fetch("/deploy", { method: "POST", body: r }),
+              i = await e.json();
+            (clearInterval(o),
+              (t.style.width = "100%"),
+              setTimeout(() => {
+                ((document.getElementById("loading").style.display = "none"),
+                  i.success
+                    ? ((document.getElementById("resultBox").style.display =
+                        "block"),
+                      (document.getElementById("resultLink").href =
+                        `/status.html?url=${i.url}`),
+                      SoundFX.success(),
+                      confetti({
+                        particleCount: 200,
+                        spread: 150,
+                        colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
+                      }))
+                    : (alert("Error: " + i.error), location.reload()));
+              }, 800));
+          } catch (e) {
+            (alert("Connection Error"), location.reload());
+          }
+        }),
+        VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
+          max: 10,
+          speed: 400,
+          gyroscope: !0,
+        }));
     </script>
   </body>
 </html>
