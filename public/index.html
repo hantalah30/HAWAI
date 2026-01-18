@@ -1076,7 +1076,9 @@
             document.getElementById("loading").style.display = "none";
             if (data.success) {
               document.getElementById("resultBox").style.display = "block";
-              document.getElementById("resultLink").href = data.url;
+              // Arahkan ke halaman loading status dulu
+              document.getElementById("resultLink").href =
+                `/status.html?url=${data.url}`;
               SoundFX.success();
               confetti({
                 particleCount: 200,

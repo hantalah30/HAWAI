@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deploying... | Hawai Hosting</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=JetBrains+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background-color: #020204;
+        color: white;
+        margin: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* LOGO ANIMATION */
+      .logo-container {
+        margin-bottom: 40px;
+        position: relative;
+      }
+      .logo-img {
+        width: 150px;
+        filter: drop-shadow(0 0 20px #00f3ff);
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 20px #00f3ff) scale(1);
+        }
+        50% {
+          filter: drop-shadow(0 0 50px #bc13fe) scale(1.05);
+        }
+      }
+
+      /* TEXTS */
+      .title {
+        font-family: "Syncopate";
+        font-size: 2rem;
+        margin-bottom: 20px;
+        letter-spacing: 5px;
+        text-align: center;
+      }
+      .status-text {
+        color: #00ff9d;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+        min-height: 20px;
+      }
+
+      /* PROGRESS BAR */
+      .bar-wrapper {
+        width: 300px;
+        height: 4px;
+        background: #333;
+        border-radius: 2px;
+        overflow: hidden;
+        position: relative;
+      }
+      .bar-fill {
+        width: 0%;
+        height: 100%;
+        background: #00f3ff;
+        box-shadow: 0 0 15px #00f3ff;
+        transition: width 0.3s linear;
+      }
+
+      /* DECORATION */
+      .grid {
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+        z-index: -1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+
+    <div class="logo-container">
+      <img src="/logo.png" class="logo-img" alt="Hawai" />
+    </div>
+
+    <div class="title">INITIALIZING<br />DEPLOYMENT</div>
+
+    <div id="statusText" class="status-text">CONNECTING TO SATELLITE...</div>
+
+    <div class="bar-wrapper">
+      <div id="progressBar" class="bar-fill"></div>
+    </div>
+
+    <div style="margin-top: 20px; color: #666; font-size: 0.7rem">
+      ESTIMATED TIME: <span id="timer">45</span>s
+    </div>
+
+    <script>
+      // Ambil URL target dari parameter ?url=...
+      const params = new URLSearchParams(window.location.search);
+      const targetUrl = params.get("url");
+
+      if (!targetUrl) {
+        document.body.innerHTML =
+          "<h1 style='color:red'>ERROR: NO TARGET URL</h1>";
+      }
+
+      const statusEl = document.getElementById("statusText");
+      const barEl = document.getElementById("progressBar");
+      const timerEl = document.getElementById("timer");
+
+      // Simulasi Log Proses (Agar terlihat canggih)
+      const logs = [
+        { pct: 5, msg: "VERIFYING INTEGRITY..." },
+        { pct: 15, msg: "UPLOADING ASSETS TO CLOUD..." },
+        { pct: 30, msg: "ALLOCATING EDGE SERVERS..." },
+        { pct: 45, msg: "PROPAGATING DNS (GLOBAL)..." },
+        { pct: 60, msg: "INSTALLING SSL CERTIFICATES..." },
+        { pct: 80, msg: "CLEARING CACHE..." },
+        { pct: 90, msg: "FINALIZING DEPLOYMENT..." },
+        { pct: 98, msg: "LAUNCHING..." },
+      ];
+
+      let progress = 0;
+      // Total waktu tunggu 45 detik (Cukup untuk Cloudflare build)
+      const totalTime = 45000;
+      const intervalTime = 100; // Update tiap 100ms
+      const step = 100 / (totalTime / intervalTime);
+
+      const timer = setInterval(() => {
+        progress += step;
+
+        // Update Bar
+        barEl.style.width = Math.min(progress, 100) + "%";
+
+        // Update Timer Countdown
+        const remaining = Math.ceil(
+          ((100 - progress) / step) * (intervalTime / 1000),
+        );
+        timerEl.innerText = Math.max(0, remaining);
+
+        // Update Status Text based on progress
+        for (let log of logs) {
+          if (progress >= log.pct) statusEl.innerText = log.msg;
+        }
+
+        // Selesai
+        if (progress >= 100) {
+          clearInterval(timer);
+          statusEl.innerText = "DEPLOYMENT COMPLETE. REDIRECTING...";
+          statusEl.style.color = "#00f3ff";
+
+          setTimeout(() => {
+            window.location.href = targetUrl;
+          }, 1000);
+        }
+      }, intervalTime);
+    </script>
+  </body>
+</html>
