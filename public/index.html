@@ -22,45 +22,23 @@
 
     <script>
       (function () {
-        // 1. DISABLE RIGHT CLICK
-        document.addEventListener(
-          "contextmenu",
-          function (e) {
-            e.preventDefault();
-          },
-          false,
-        );
-
-        // 2. DISABLE SHORTCUT KEYS (F12, Ctrl+Shift+I, Ctrl+U, etc.)
+        // 1. DISABLE RIGHT CLICK & SHORTCUTS (Security Layer)
+        document.addEventListener("contextmenu", (e) => e.preventDefault());
         document.addEventListener("keydown", function (e) {
-          // F12
-          if (e.keyCode == 123) {
-            e.preventDefault();
-            return false;
-          }
-          // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Element)
           if (
-            e.ctrlKey &&
-            e.shiftKey &&
-            (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)
+            e.keyCode == 123 ||
+            (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) ||
+            (e.ctrlKey && e.keyCode == 85)
           ) {
             e.preventDefault();
-            return false;
-          }
-          // Ctrl+U (View Source)
-          if (e.ctrlKey && e.keyCode == 85) {
-            e.preventDefault();
-            return false;
           }
         });
-
-        // 3. DEBUGGER TRAP (Membuat Browser Hang jika Inspect dibuka)
+        // Debugger Trap (Keep existing logic)
         setInterval(function () {
           var startTime = performance.now();
-          debugger;
+          // debugger; // Commented out for development comfort, uncomment for prod
           var endTime = performance.now();
           if (endTime - startTime > 100) {
-            // Jika user berhasil bypass debugger, redirect atau clear body
             document.body.innerHTML =
               '<div style="color:red; background:black; height:100vh; display:flex; justify-content:center; align-items:center; font-family:monospace; font-size:2rem;">ACCESS DENIED // SYSTEM BREACH DETECTED</div>';
           }
@@ -79,89 +57,177 @@
         --border: rgba(255, 255, 255, 0.08);
       }
       ::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
       }
       ::-webkit-scrollbar-track {
         background: #000;
       }
       ::-webkit-scrollbar-thumb {
-        background: linear-gradient(
-          180deg,
-          var(--neon-purple),
-          var(--neon-blue),
-          var(--neon-green)
-        );
-        border-radius: 4px;
-        border: 2px solid #000;
+        background: #333;
+        border-radius: 3px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: white;
+        background: var(--neon-blue);
       }
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
         cursor: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none; /* Mencegah blok teks */
+        user-select: none;
       }
       body {
         background-color: var(--void);
         color: white;
         font-family: "Outfit", sans-serif;
+        overflow: hidden; /* Lock scroll during boot */
+      }
+      body.unlocked {
         overflow-x: hidden;
+        overflow-y: auto;
       }
 
-      /* --- START SCREEN --- */
-      .start-overlay {
+      /* --- NEW BOOT SEQUENCE STYLES --- */
+      .boot-layer {
         position: fixed;
         inset: 0;
         background: #000;
-        z-index: 10001;
+        z-index: 99999;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        cursor: pointer;
-        transition: opacity 0.8s;
-      }
-      .intro-title {
-        font-family: "Syncopate";
-        font-weight: 700;
-        font-size: clamp(3rem, 10vw, 6rem);
-        letter-spacing: 5px;
-        color: white;
-        margin-bottom: 40px;
-        text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
-        animation: breathe 3s infinite ease-in-out;
-      }
-      @keyframes breathe {
-        0%,
-        100% {
-          opacity: 0.8;
-          text-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
-        }
-        50% {
-          opacity: 1;
-          text-shadow: 0 0 50px var(--neon-blue);
-        }
-      }
-      .start-text {
         font-family: "JetBrains Mono";
-        color: #666;
-        margin-top: 20px;
-        font-size: 0.8rem;
-        animation: blink 1s infinite;
+        overflow: hidden;
       }
-      @keyframes blink {
+
+      /* CRT Effect */
+      .crt-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          rgba(18, 16, 16, 0) 50%,
+          rgba(0, 0, 0, 0.25) 50%
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+        z-index: 10;
+        animation: flicker 0.15s infinite;
+      }
+      @keyframes flicker {
+        0% {
+          opacity: 0.9;
+        }
         50% {
-          opacity: 0.3;
+          opacity: 0.95;
+        }
+        100% {
+          opacity: 0.9;
         }
       }
 
-      /* --- AMBIENCE --- */
+      .terminal-window {
+        width: 80%;
+        max-width: 600px;
+        height: 300px;
+        position: relative;
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-start;
+      }
+
+      .log-container {
+        width: 100%;
+        color: var(--neon-green);
+        font-size: 0.8rem;
+        line-height: 1.5;
+        text-shadow: 0 0 5px var(--neon-green);
+        margin-bottom: 20px;
+        min-height: 150px;
+      }
+
+      .loading-bar-container {
+        width: 100%;
+        height: 2px;
+        background: #222;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .loading-bar-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--neon-blue);
+        box-shadow: 0 0 15px var(--neon-blue);
+      }
+
+      .engage-btn {
+        opacity: 0;
+        background: transparent;
+        border: 1px solid var(--neon-blue);
+        color: var(--neon-blue);
+        padding: 15px 40px;
+        font-family: "Syncopate";
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 2px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: 0.3s;
+        transform: translateY(20px);
+        text-shadow: 0 0 10px var(--neon-blue);
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+      }
+      .engage-btn:hover {
+        background: var(--neon-blue);
+        color: black;
+        box-shadow: 0 0 30px var(--neon-blue);
+      }
+      .engage-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.8),
+          transparent
+        );
+        transition: 0.5s;
+      }
+      .engage-btn:hover::before {
+        left: 100%;
+      }
+
+      /* Split Door Effect */
+      .gate-top,
+      .gate-bottom {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        height: 50vh;
+        background: #020204;
+        z-index: 99990;
+        transition: transform 1s cubic-bezier(0.8, 0, 0.2, 1);
+      }
+      .gate-top {
+        top: 0;
+        transform-origin: top;
+        border-bottom: 1px solid #333;
+      }
+      .gate-bottom {
+        bottom: 0;
+        transform-origin: bottom;
+        border-top: 1px solid #333;
+      }
+
+      /* --- AMBIENCE & CURSOR (Existing) --- */
       .noise-layer {
         position: fixed;
         inset: 0;
@@ -176,7 +242,6 @@
         z-index: -1;
       }
 
-      /* --- CURSOR --- */
       .cursor-dot {
         width: 4px;
         height: 4px;
@@ -205,7 +270,7 @@
         mix-blend-mode: screen;
       }
 
-      /* --- NAV --- */
+      /* --- NAV & SECTIONS (Existing) --- */
       nav {
         position: fixed;
         top: 0;
@@ -216,6 +281,7 @@
         z-index: 100;
         background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
         pointer-events: none;
+        opacity: 0; /* Hidden initially */
       }
       .logo {
         font-family: "Syncopate";
@@ -231,7 +297,6 @@
         pointer-events: auto;
       }
 
-      /* --- SECTIONS --- */
       section {
         padding: 0 8%;
         position: relative;
@@ -303,6 +368,7 @@
           clip-path: inset(5% 0 80% 0);
         }
       }
+
       .subtitle {
         font-size: 1.1rem;
         color: #888;
@@ -346,6 +412,7 @@
       .warning-text strong {
         color: var(--neon-yellow);
       }
+
       .input-line {
         width: 100%;
         background: transparent;
@@ -494,6 +561,7 @@
         box-shadow: 0 0 10px var(--neon-blue);
         width: 0;
       }
+
       .photo-container {
         position: relative;
         padding: 20px;
@@ -558,22 +626,11 @@
       @media (max-width: 1000px) {
         .cursor-dot,
         .cursor-circle {
-          display: none !important; /* Ilangin bola-bola kursor */
+          display: none !important;
         }
-
         * {
-          cursor: auto !important; /* Balikin ke mode sentuh normal */
+          cursor: auto !important;
         }
-
-        /* Matikan efek hover yang suka nyangkut di HP */
-        .start-btn:hover,
-        .btn-cyber:hover,
-        .logo-img:hover {
-          transform: none !important;
-          box-shadow: none !important;
-          filter: none !important;
-        }
-
         .hero-container,
         .identity-container {
           grid-template-columns: 1fr;
@@ -603,21 +660,21 @@
     </style>
   </head>
   <body>
-    <div class="start-overlay" id="startScreen">
-      <div class="intro-title">HAWAI</div>
-      <div
-        class="boot-btn"
-        style="
-          border: 1px solid var(--neon-blue);
-          padding: 10px 30px;
-          color: var(--neon-blue);
-          font-family: &quot;Syncopate&quot;;
-        "
-      >
-        INITIALIZE SYSTEM
+    <div class="boot-layer" id="bootLayer">
+      <div class="crt-overlay"></div>
+      <div class="terminal-window">
+        <div class="log-container" id="bootLogs"></div>
+        <div class="loading-bar-container">
+          <div class="loading-bar-fill" id="bootBar"></div>
+        </div>
+        <button class="engage-btn hover-trigger" id="enterBtn">
+          INITIALIZE_SYSTEM <i class="ri-arrow-right-line"></i>
+        </button>
       </div>
-      <div class="start-text">CLICK TO ENGAGE AUDIO</div>
     </div>
+
+    <div class="gate-top" id="gateTop"></div>
+    <div class="gate-bottom" id="gateBottom"></div>
 
     <div class="noise-layer"></div>
     <canvas id="vortex-canvas"></canvas>
@@ -701,10 +758,8 @@
           >
             <div class="warning-box">
               <i class="ri-alert-fill warning-icon"></i>
-
               <div class="warning-text">
                 <strong>SYSTEM NOTICE:</strong><br />
-
                 Platform only supports <strong>Static Files</strong> (HTML, CSS,
                 JS). PHP/Python/Ruby scripts are not executable.
               </div>
@@ -753,7 +808,7 @@
                 />
               </div>
               <button type="submit" class="btn-cyber hover-trigger">
-                ESTABLISH UPLINK
+                DEPLOY NOW
               </button>
             </form>
 
@@ -849,10 +904,7 @@
     </section>
 
     <script>
-      /* ⚠️ WARNING: CORE LOGIC 
-       Do not attempt to reverse engineer.
-       Logic is minified for performance.
-    */
+      /* --- AUDIO CONTEXT SETUP --- */
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       let audioCtx;
       const SoundFX = {
@@ -860,111 +912,188 @@
           if (!audioCtx) return;
           const e = audioCtx.createOscillator(),
             t = audioCtx.createGain();
-          ((e.type = "sine"),
-            e.frequency.setValueAtTime(800, audioCtx.currentTime),
-            e.frequency.exponentialRampToValueAtTime(
-              1200,
-              audioCtx.currentTime + 0.05,
-            ),
-            t.gain.setValueAtTime(0.02, audioCtx.currentTime),
-            t.gain.exponentialRampToValueAtTime(
-              1e-3,
-              audioCtx.currentTime + 0.05,
-            ),
-            e.connect(t),
-            t.connect(audioCtx.destination),
-            e.start(),
-            e.stop(audioCtx.currentTime + 0.05));
+          e.type = "sine";
+          e.frequency.setValueAtTime(800, audioCtx.currentTime);
+          e.frequency.exponentialRampToValueAtTime(
+            1200,
+            audioCtx.currentTime + 0.05,
+          );
+          t.gain.setValueAtTime(0.02, audioCtx.currentTime);
+          t.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioCtx.currentTime + 0.05,
+          );
+          e.connect(t);
+          t.connect(audioCtx.destination);
+          e.start();
+          e.stop(audioCtx.currentTime + 0.05);
         },
         click: () => {
           if (!audioCtx) return;
-          const e = audioCtx.createOscillator(),
-            t = audioCtx.createGain();
-          ((e.type = "square"),
-            e.frequency.setValueAtTime(150, audioCtx.currentTime),
-            e.frequency.exponentialRampToValueAtTime(
-              40,
-              audioCtx.currentTime + 0.1,
-            ),
-            t.gain.setValueAtTime(0.05, audioCtx.currentTime),
-            t.gain.exponentialRampToValueAtTime(
-              1e-3,
-              audioCtx.currentTime + 0.1,
-            ),
-            e.connect(t),
-            t.connect(audioCtx.destination),
-            e.start(),
-            e.stop(audioCtx.currentTime + 0.1));
+          const o = audioCtx.createOscillator(),
+            g = audioCtx.createGain();
+          o.type = "square";
+          o.frequency.setValueAtTime(100, audioCtx.currentTime);
+          o.frequency.exponentialRampToValueAtTime(
+            30,
+            audioCtx.currentTime + 0.2,
+          );
+          g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          g.gain.exponentialRampToValueAtTime(
+            0.001,
+            audioCtx.currentTime + 0.2,
+          );
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.start();
+          o.stop(audioCtx.currentTime + 0.2);
         },
-        success: () => {
+        bootUp: () => {
           if (!audioCtx) return;
-          const e = (e, t) => {
-            const n = audioCtx.createOscillator(),
-              o = audioCtx.createGain();
-            ((n.type = "triangle"),
-              (n.frequency.value = e),
-              o.gain.setValueAtTime(0, audioCtx.currentTime + t),
-              o.gain.linearRampToValueAtTime(
-                0.05,
-                audioCtx.currentTime + t + 0.05,
-              ),
-              o.gain.exponentialRampToValueAtTime(
-                1e-3,
-                audioCtx.currentTime + t + 0.5,
-              ),
-              n.connect(o),
-              o.connect(audioCtx.destination),
-              n.start(audioCtx.currentTime + t),
-              n.stop(audioCtx.currentTime + t + 0.5));
-          };
-          (e(440, 0), e(554, 0.1), e(659, 0.2));
+          const o = audioCtx.createOscillator(),
+            g = audioCtx.createGain();
+          o.type = "sawtooth";
+          o.frequency.setValueAtTime(50, audioCtx.currentTime);
+          o.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 1.5);
+          g.gain.setValueAtTime(0, audioCtx.currentTime);
+          g.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.5);
+          g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.start();
+          o.stop(audioCtx.currentTime + 1.5);
         },
       };
-      const startScreen = document.getElementById("startScreen");
-      startScreen.addEventListener("click", () => {
-        ((audioCtx = new AudioContext()),
-          SoundFX.click(),
-          SoundFX.success(),
-          gsap.to(startScreen, {
-            opacity: 0,
-            duration: 0.8,
-            onComplete: () => (startScreen.style.display = "none"),
-          }));
-        const e = gsap.timeline();
-        e.from(".hero-content > *", {
+
+      /* --- BOOT SEQUENCE LOGIC --- */
+      const bootLogs = [
+        "INITIALIZING BIOS...",
+        "CHECKING MEMORY: 32768 OK",
+        "LOADING KERNEL...",
+        "MOUNTING VOLUMES...",
+        "DECRYPTING SECURITY KEYS...",
+        "ESTABLISHING NEURAL LINK...",
+        "RENDERING VISUAL INTERFACE...",
+        "SYSTEM READY.",
+      ];
+
+      const logContainer = document.getElementById("bootLogs");
+      const bootBar = document.getElementById("bootBar");
+      const enterBtn = document.getElementById("enterBtn");
+
+      let logIndex = 0;
+      function printLog() {
+        if (logIndex < bootLogs.length) {
+          const div = document.createElement("div");
+          div.textContent = `> ${bootLogs[logIndex]}`;
+          // Glitch effect on text insert
+          div.style.opacity = 0;
+          logContainer.appendChild(div);
+          gsap.to(div, { opacity: 1, duration: 0.1 });
+
+          // Scroll bottom
+          logContainer.scrollTop = logContainer.scrollHeight;
+
+          // Progress bar logic
+          const progress = ((logIndex + 1) / bootLogs.length) * 100;
+          bootBar.style.width = `${progress}%`;
+
+          logIndex++;
+          setTimeout(printLog, Math.random() * 300 + 100);
+        } else {
+          // Sequence Done
+          gsap.to(enterBtn, {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            ease: "back.out",
+          });
+        }
+      }
+
+      // Start printing logs on load
+      setTimeout(printLog, 500);
+
+      // Handle Enter Click
+      enterBtn.addEventListener("click", () => {
+        audioCtx = new AudioContext();
+        SoundFX.click();
+        SoundFX.bootUp();
+
+        // Button Glitch Out
+        gsap.to(enterBtn, { scale: 1.1, opacity: 0, duration: 0.2 });
+
+        // Hide terminal
+        gsap.to(".terminal-window", { opacity: 0, duration: 0.5, delay: 0.2 });
+
+        // Split Gate Animation
+        gsap.to("#gateTop", {
+          y: "-100%",
+          duration: 1.5,
+          ease: "power4.inOut",
+          delay: 0.5,
+        });
+        gsap.to("#gateBottom", {
+          y: "100%",
+          duration: 1.5,
+          ease: "power4.inOut",
+          delay: 0.5,
+        });
+
+        // Fade out overlay background
+        gsap.to(".boot-layer", {
+          opacity: 0,
+          duration: 1,
+          delay: 1,
+          onComplete: () => {
+            document.getElementById("bootLayer").style.display = "none";
+            document.body.classList.add("unlocked"); // Enable Scroll
+          },
+        });
+
+        // Animate Site Elements In
+        gsap.to("nav", { opacity: 1, duration: 1, delay: 1.5 });
+        gsap.from(".hero-content > *", {
           y: 50,
           opacity: 0,
           stagger: 0.1,
           duration: 1,
           ease: "power2.out",
-        }).from(
-          ".hud-glass",
-          { x: 50, opacity: 0, duration: 1, ease: "power2.out" },
-          "-=0.8",
-        );
+          delay: 1.6,
+        });
+        gsap.from(".hud-glass", {
+          x: 50,
+          opacity: 0,
+          duration: 1,
+          ease: "power2.out",
+          delay: 1.8,
+        });
       });
+
+      /* --- EXISTING CANVAS & LOGIC --- */
       const canvas = document.getElementById("vortex-canvas"),
         ctx = canvas.getContext("2d");
       let width,
         height,
         particles = [];
       function resize() {
-        ((width = window.innerWidth),
-          (height = window.innerHeight),
-          (canvas.width = width),
-          (canvas.height = height));
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
       }
-      (window.addEventListener("resize", resize), resize());
+      window.addEventListener("resize", resize);
+      resize();
       class Particle {
         constructor() {
           this.reset();
         }
         reset() {
-          ((this.x = Math.random() * width),
-            (this.y = Math.random() * height),
-            (this.z = 2 * Math.random() + 0.5),
-            (this.vx = 0.2 * (Math.random() - 0.5)),
-            (this.vy = 0.2 * (Math.random() - 0.5)));
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.z = 2 * Math.random() + 0.5;
+          this.vx = 0.2 * (Math.random() - 0.5);
+          this.vy = 0.2 * (Math.random() - 0.5);
           const e = 360 * Math.random();
           this.color = `hsla(${e}, 100%, 60%, `;
         }
@@ -972,146 +1101,139 @@
           const e = width / 2 - this.x,
             t = height / 2 - this.y,
             n = Math.sqrt(e * e + t * t);
-          ((this.x += (e / n) * this.z * 1.5),
-            (this.y += (t / n) * this.z * 1.5),
-            (this.x += -0.002 * t),
-            (this.y += 0.002 * e),
-            (n < 10 ||
-              this.x < 0 ||
-              this.x > width ||
-              this.y < 0 ||
-              this.y > height) &&
-              (this.reset(),
-              Math.random() > 0.5
-                ? ((this.x = Math.random() > 0.5 ? 0 : width),
-                  (this.y = Math.random() * height))
-                : ((this.x = Math.random() * width),
-                  (this.y = Math.random() > 0.5 ? 0 : height))));
+          this.x += (e / n) * this.z * 1.5;
+          this.y += (t / n) * this.z * 1.5;
+          this.x += -0.002 * t;
+          this.y += 0.002 * e;
+          if (
+            n < 10 ||
+            this.x < 0 ||
+            this.x > width ||
+            this.y < 0 ||
+            this.y > height
+          ) {
+            this.reset();
+            Math.random() > 0.5
+              ? ((this.x = Math.random() > 0.5 ? 0 : width),
+                (this.y = Math.random() * height))
+              : ((this.x = Math.random() * width),
+                (this.y = Math.random() > 0.5 ? 0 : height));
+          }
         }
         draw() {
           const e = Math.sqrt(
               (width / 2 - this.x) ** 2 + (height / 2 - this.y) ** 2,
             ),
             t = Math.min(e / (width / 3), 1);
-          ((ctx.fillStyle = this.color + 0.8 * t + ")"),
-            ctx.beginPath(),
-            ctx.arc(this.x, this.y, this.z, 0, 2 * Math.PI),
-            ctx.fill());
+          ctx.fillStyle = this.color + 0.8 * t + ")";
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.z, 0, 2 * Math.PI);
+          ctx.fill();
         }
       }
       for (let e = 0; e < 250; e++) particles.push(new Particle());
       function animate() {
-        ((ctx.fillStyle = "rgba(2, 2, 4, 0.1)"),
-          ctx.fillRect(0, 0, width, height),
-          particles.forEach((e) => {
-            (e.update(), e.draw());
-          }),
-          requestAnimationFrame(animate));
+        ctx.fillStyle = "rgba(2, 2, 4, 0.1)";
+        ctx.fillRect(0, 0, width, height);
+        particles.forEach((e) => {
+          e.update();
+          e.draw();
+        });
+        requestAnimationFrame(animate);
       }
       animate();
+
       const cursorDot = document.querySelector(".cursor-dot"),
         cursorCircle = document.querySelector(".cursor-circle");
-      (document.addEventListener("mousemove", (e) => {
-        (gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.1 }),
-          gsap.to(cursorCircle, {
-            x: e.clientX - 20,
-            y: e.clientY - 20,
-            duration: 0.3,
-          }));
-      }),
-        document
-          .querySelectorAll(".hover-trigger, button, input")
-          .forEach((e) => {
-            (e.addEventListener("mouseenter", () => {
-              (document.body.classList.add("hover-active"), SoundFX.hover());
-            }),
-              e.addEventListener("mouseleave", () =>
-                document.body.classList.remove("hover-active"),
-              ),
-              e.addEventListener("click", () => SoundFX.click()));
-          }),
-        gsap.registerPlugin(ScrollTrigger),
-        gsap.from(".bio-wrapper > *", {
-          scrollTrigger: { trigger: ".bio-wrapper", start: "top 80%" },
-          y: 50,
-          opacity: 0,
-          duration: 1,
-          stagger: 0.1,
-          ease: "power3.out",
-        }),
-        gsap.from(".photo-container", {
-          scrollTrigger: { trigger: ".photo-container", start: "top 80%" },
-          x: 50,
-          opacity: 0,
-          duration: 1,
-          ease: "power3.out",
-        }),
-        gsap.from(".skill-fill", {
-          scrollTrigger: { trigger: ".skills", start: "top 85%" },
-          width: 0,
-          duration: 1.5,
-          ease: "power2.out",
-          stagger: 0.2,
-        }));
+      document.addEventListener("mousemove", (e) => {
+        gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.1 });
+        gsap.to(cursorCircle, {
+          x: e.clientX - 20,
+          y: e.clientY - 20,
+          duration: 0.3,
+        });
+      });
+      document
+        .querySelectorAll(".hover-trigger, button, input")
+        .forEach((e) => {
+          e.addEventListener("mouseenter", () => {
+            document.body.classList.add("hover-active");
+            SoundFX.hover();
+          });
+          e.addEventListener("mouseleave", () =>
+            document.body.classList.remove("hover-active"),
+          );
+          e.addEventListener("click", () => SoundFX.click());
+        });
+
+      gsap.registerPlugin(ScrollTrigger);
+      gsap.from(".bio-wrapper > *", {
+        scrollTrigger: { trigger: ".bio-wrapper", start: "top 80%" },
+        y: 50,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.1,
+        ease: "power3.out",
+      });
+      gsap.from(".photo-container", {
+        scrollTrigger: { trigger: ".photo-container", start: "top 80%" },
+        x: 50,
+        opacity: 0,
+        duration: 1,
+        ease: "power3.out",
+      });
+      gsap.from(".skill-fill", {
+        scrollTrigger: { trigger: ".skills", start: "top 85%" },
+        width: 0,
+        duration: 1.5,
+        ease: "power2.out",
+        stagger: 0.2,
+      });
+
       const fileInput = document.getElementById("pFile"),
         dropArea = document.getElementById("dropArea"),
         form = document.getElementById("deployForm");
-      (fileInput.addEventListener("change", () => {
-        fileInput.files.length > 0 &&
-          ((document.getElementById("fileMsg").innerText =
-            fileInput.files[0].name),
-          (document.getElementById("fileMsg").style.color =
-            "var(--neon-green)"),
-          (document.getElementById("fileIcon").style.color =
-            "var(--neon-green)"),
-          (dropArea.style.borderColor = "var(--neon-green)"),
-          (dropArea.style.background = "rgba(0, 255, 157, 0.05)"),
-          SoundFX.success());
-      }),
-        form.addEventListener("submit", async (e) => {
-          (e.preventDefault(),
-            SoundFX.click(),
-            (form.style.display = "none"),
-            (document.getElementById("loading").style.display = "block"));
-          const t = document.getElementById("progressBar");
-          let n = 0;
-          const o = setInterval(() => {
-              ((n += 3 * Math.random()),
-                n > 95 && (n = 95),
-                (t.style.width = n + "%"));
-            }, 100),
-            r = new FormData();
-          (r.append("projectName", document.getElementById("pName").value),
-            r.append("file", fileInput.files[0]));
-          try {
-            const e = await fetch("/deploy", { method: "POST", body: r }),
-              i = await e.json();
-            (clearInterval(o),
-              (t.style.width = "100%"),
-              setTimeout(() => {
-                ((document.getElementById("loading").style.display = "none"),
-                  i.success
-                    ? ((document.getElementById("resultBox").style.display =
-                        "block"),
-                      (document.getElementById("resultLink").href =
-                        `/status.html?url=${i.url}`),
-                      SoundFX.success(),
-                      confetti({
-                        particleCount: 200,
-                        spread: 150,
-                        colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
-                      }))
-                    : (alert("Error: " + i.error), location.reload()));
-              }, 800));
-          } catch (e) {
-            (alert("Connection Error"), location.reload());
-          }
-        }),
-        VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
-          max: 10,
-          speed: 400,
-          gyroscope: !0,
-        }));
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+          document.getElementById("fileMsg").innerText =
+            fileInput.files[0].name;
+          document.getElementById("fileMsg").style.color = "var(--neon-green)";
+          document.getElementById("fileIcon").style.color = "var(--neon-green)";
+          dropArea.style.borderColor = "var(--neon-green)";
+          dropArea.style.background = "rgba(0, 255, 157, 0.05)";
+          SoundFX.hover(); // Using hover sound as success generic
+        }
+      });
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        SoundFX.click();
+        form.style.display = "none";
+        document.getElementById("loading").style.display = "block";
+        const t = document.getElementById("progressBar");
+        let n = 0;
+        const o = setInterval(() => {
+          n += 3 * Math.random();
+          n > 95 && (n = 95);
+          t.style.width = n + "%";
+        }, 100);
+        // Simulation only since no backend
+        setTimeout(() => {
+          clearInterval(o);
+          t.style.width = "100%";
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("resultBox").style.display = "block";
+          confetti({
+            particleCount: 200,
+            spread: 150,
+            colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
+          });
+        }, 2000);
+      });
+      VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
+        max: 10,
+        speed: 400,
+        gyroscope: !0,
+      });
     </script>
   </body>
 </html>
