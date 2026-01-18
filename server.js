@@ -1,4 +1,4 @@
-// server.js (Vercel & Isomorphic-Git Edition)
+// server.js (Vercel & Isomorphic-Git Fix Branch)
 require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
@@ -105,30 +105,28 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       throw new Error("index.html tidak ditemukan di root file zip!");
     }
 
-    // 3. GITHUB REPO (Create if not exists)
+    // 3. GITHUB REPO
     try {
       await axios.post(
         "https://api.github.com/user/repos",
         {
           name: hawaiName,
           private: false,
-          auto_init: true, // auto_init creates a commit
+          auto_init: false, // auto_init FALSE agar repo kosong
         },
         { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
-      await delay(2000); // Wait for repo creation
+      await delay(1000);
     } catch (e) {
-      console.log("Repo might already exist, continuing...");
+      console.log("Repo might exist...");
     }
 
-    // 4. GIT OPERATIONS (ISOMORPHIC-GIT)
-    // Init Git di folder temp
-    await git.init({ fs, dir: extractPath });
+    // 4. GIT OPERATIONS (FIXED BRANCH LOGIC)
+    // Init Git
+    await git.init({ fs, dir: extractPath, defaultBranch: "main" }); // Force default branch 'main'
 
-    // Add All Files
-    const fileList = await fs.readdir(extractPath); // Simple readdir for now, ideally walk
-    // Note: isomorphic-git add . is not direct, using a glob pattern loop is safer or just specific files
-    // For simplicity in this env, we use add '.' equivalent logic:
+    // Add All Files (Manual loop for Vercel compat)
+    // Note: git.add '.' is tricky in isomorphic, we use glob pattern
     await git.add({ fs, dir: extractPath, filepath: "." });
 
     // Commit
@@ -136,10 +134,10 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       fs,
       dir: extractPath,
       author: { name: "HawaiBot", email: "bot@hawai.id" },
-      message: "Auto Deploy from Hawai Hosting",
+      message: "Auto Deploy",
     });
 
-    // Add Remote & Push
+    // Add Remote
     await git.addRemote({
       fs,
       dir: extractPath,
@@ -147,17 +145,19 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       url: `https://github.com/${GITHUB_USER}/${hawaiName}.git`,
     });
 
+    // PUSH (FIXED)
+    console.log("Pushing...");
     await git.push({
       fs,
       http,
       dir: extractPath,
       remote: "origin",
-      ref: "main",
+      ref: "main", // Explicitly push to main
       onAuth: () => ({ username: GITHUB_TOKEN }),
       force: true,
     });
 
-    // 5. CLOUDFLARE
+    // 5. CLOUDFLARE PAGES
     try {
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects`,
@@ -196,7 +196,6 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
 
     const liveUrl = `https://${hawaiName}.pages.dev`;
 
-    // Cleanup /tmp
     try {
       fs.removeSync(extractPath);
       fs.unlinkSync(zipPath);
