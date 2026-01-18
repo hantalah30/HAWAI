@@ -1,14 +1,19 @@
 {
   "name": "hawai",
   "version": "1.0.0",
-  "description": "Hawai Hosting System",
+  "description": "",
   "main": "server.js",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   },
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
     "adm-zip": "^0.5.16",
     "axios": "^1.13.2",
