@@ -1,4 +1,3 @@
-// server.js (Vercel & Isomorphic-Git Fix Branch)
 require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
@@ -13,14 +12,16 @@ const os = require("os");
 
 const app = express();
 app.use(cors());
-app.use(express.static("public"));
 
-// --- RUTE HALAMAN DEPAN ---
+// ARTIKAN FOLDER PUBLIC SECARA EKSPLISIT
+app.use(express.static(path.join(__dirname, "public")));
+
+// HALAMAN DEPAN
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// --- KONFIGURASI PATH VERCEL (/tmp) ---
+// KONFIGURASI PATH VERCEL (/tmp)
 const TMP_DIR = os.tmpdir();
 const UPLOAD_DIR = path.join(TMP_DIR, "uploads");
 const EXTRACT_DIR = path.join(TMP_DIR, "temp");
@@ -112,7 +113,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         {
           name: hawaiName,
           private: false,
-          auto_init: false, // auto_init FALSE agar repo kosong
+          auto_init: false,
         },
         { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
@@ -121,13 +122,17 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       console.log("Repo might exist...");
     }
 
-    // 4. GIT OPERATIONS (FIXED BRANCH LOGIC)
-    // Init Git
-    await git.init({ fs, dir: extractPath, defaultBranch: "main" }); // Force default branch 'main'
+    // 4. GIT OPERATIONS (FIXED)
+    // Inisialisasi dengan branch main explicit
+    await git.init({ fs, dir: extractPath, defaultBranch: "main" });
 
-    // Add All Files (Manual loop for Vercel compat)
-    // Note: git.add '.' is tricky in isomorphic, we use glob pattern
-    await git.add({ fs, dir: extractPath, filepath: "." });
+    // Add file satu per satu (lebih aman buat Vercel)
+    const allFiles = fs.readdirSync(extractPath); // Simple listing
+    for (const file of allFiles) {
+      if (file !== ".git") {
+        await git.add({ fs, dir: extractPath, filepath: file });
+      }
+    }
 
     // Commit
     await git.commit({
@@ -145,14 +150,13 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       url: `https://github.com/${GITHUB_USER}/${hawaiName}.git`,
     });
 
-    // PUSH (FIXED)
-    console.log("Pushing...");
+    // PUSH
     await git.push({
       fs,
       http,
       dir: extractPath,
       remote: "origin",
-      ref: "main", // Explicitly push to main
+      ref: "main",
       onAuth: () => ({ username: GITHUB_TOKEN }),
       force: true,
     });
@@ -195,7 +199,6 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
     } catch (e) {}
 
     const liveUrl = `https://${hawaiName}.pages.dev`;
-
     try {
       fs.removeSync(extractPath);
       fs.unlinkSync(zipPath);
