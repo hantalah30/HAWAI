@@ -21,7 +21,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "fs-extra": "^11.3.3",
-    "multer": "^2.0.2",
-    "simple-git": "^3.30.0"
+    "isomorphic-git": "^1.25.10",
+    "multer": "^2.0.2"
   }
 }
