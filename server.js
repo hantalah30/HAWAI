@@ -54,27 +54,31 @@ const cleanGitTrash = (dir) => {
   });
 };
 
-const fixFolderStructure = async (rootDir) => {
-  const files = await fs.readdir(rootDir);
-  const validFiles = files.filter(
-    (f) => !["__MACOSX", ".DS_Store", ".git"].includes(f),
-  );
-  if (validFiles.length === 1) {
-    const singleItemPath = path.join(rootDir, validFiles[0]);
-    const stats = await fs.stat(singleItemPath);
-    if (stats.isDirectory()) {
-      const children = await fs.readdir(singleItemPath);
-      for (const child of children) {
-        await fs.move(
-          path.join(singleItemPath, child),
-          path.join(rootDir, child),
-          { overwrite: true },
-        );
+// --- FUNGSI PINTAR: CARI INDEX.HTML SAMPAI KETEMU ---
+async function findIndexDir(dir) {
+  const items = await fs.readdir(dir);
+
+  // Cek apakah index.html ada di sini?
+  if (items.includes("index.html")) return dir;
+
+  // Kalau tidak, cari di folder anaknya
+  for (const item of items) {
+    const fullPath = path.join(dir, item);
+    try {
+      const stat = await fs.stat(fullPath);
+      if (
+        stat.isDirectory() &&
+        ![".git", "__MACOSX", "node_modules"].includes(item)
+      ) {
+        const found = await findIndexDir(fullPath);
+        if (found) return found;
       }
-      await fs.remove(singleItemPath);
+    } catch (e) {
+      continue;
     }
   }
-};
+  return null;
+}
 
 app.post("/deploy", upload.single("file"), async (req, res) => {
   if (!req.file || !req.body.projectName) {
@@ -98,12 +102,25 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(extractPath, true);
 
-    // 2. CLEAN & FIX
+    // 2. CLEAN & SMART FIX
     cleanGitTrash(extractPath);
-    await fixFolderStructure(extractPath);
 
-    if (!fs.existsSync(path.join(extractPath, "index.html"))) {
-      throw new Error("index.html tidak ditemukan di root file zip!");
+    // Cari folder asli yang ada index.html-nya
+    const realRoot = await findIndexDir(extractPath);
+
+    if (!realRoot) {
+      throw new Error("index.html tidak ditemukan di dalam file ZIP manapun!");
+    }
+
+    // Jika index.html ada di dalam folder anak, pindahkan isinya ke root ekstraksi
+    if (realRoot !== extractPath) {
+      console.log(`📂 Memindahkan file dari ${realRoot} ke root...`);
+      const files = await fs.readdir(realRoot);
+      for (const file of files) {
+        await fs.move(path.join(realRoot, file), path.join(extractPath, file), {
+          overwrite: true,
+        });
+      }
     }
 
     // 3. GITHUB REPO
@@ -122,19 +139,16 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       console.log("Repo might exist...");
     }
 
-    // 4. GIT OPERATIONS (FIXED)
-    // Inisialisasi dengan branch main explicit
+    // 4. GIT OPERATIONS
     await git.init({ fs, dir: extractPath, defaultBranch: "main" });
 
-    // Add file satu per satu (lebih aman buat Vercel)
-    const allFiles = fs.readdirSync(extractPath); // Simple listing
+    const allFiles = fs.readdirSync(extractPath);
     for (const file of allFiles) {
       if (file !== ".git") {
         await git.add({ fs, dir: extractPath, filepath: file });
       }
     }
 
-    // Commit
     await git.commit({
       fs,
       dir: extractPath,
@@ -142,7 +156,6 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       message: "Auto Deploy",
     });
 
-    // Add Remote
     await git.addRemote({
       fs,
       dir: extractPath,
@@ -150,7 +163,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       url: `https://github.com/${GITHUB_USER}/${hawaiName}.git`,
     });
 
-    // PUSH
+    console.log("Pushing...");
     await git.push({
       fs,
       http,
@@ -191,9 +204,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
     try {
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${hawaiName}/deployments`,
-        {
-          branch: "main",
-        },
+        { branch: "main" },
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
     } catch (e) {}
