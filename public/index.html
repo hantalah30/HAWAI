@@ -1237,30 +1237,71 @@
           SoundFX.hover(); // Using hover sound as success generic
         }
       });
+      // --- REVISI LOGIKA UPLOAD (REAL CONNECT KE SERVER) ---
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         SoundFX.click();
+
+        // 1. Tampilkan Loading UI
         form.style.display = "none";
         document.getElementById("loading").style.display = "block";
-        const t = document.getElementById("progressBar");
-        let n = 0;
-        const o = setInterval(() => {
-          n += 3 * Math.random();
-          n > 95 && (n = 95);
-          t.style.width = n + "%";
-        }, 100);
-        // Simulation only since no backend
-        setTimeout(() => {
-          clearInterval(o);
-          t.style.width = "100%";
-          document.getElementById("loading").style.display = "none";
-          document.getElementById("resultBox").style.display = "block";
-          confetti({
-            particleCount: 200,
-            spread: 150,
-            colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
+        const bar = document.getElementById("progressBar");
+
+        // Animasi loading fake sambil nunggu upload ke Vercel selesai
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += Math.random() * 5;
+          if (progress > 90) progress = 90; // Mentok di 90% sampai respon server datang
+          bar.style.width = progress + "%";
+        }, 200);
+
+        // 2. Siapkan Data
+        const formData = new FormData();
+        formData.append("projectName", document.getElementById("pName").value);
+        formData.append("file", fileInput.files[0]);
+
+        try {
+          // 3. KIRIM KE SERVER.JS (Ini yang kemarin hilang)
+          const res = await fetch("/deploy", {
+            method: "POST",
+            body: formData,
           });
-        }, 2000);
+
+          const data = await res.json();
+          clearInterval(interval); // Stop animasi loading
+          bar.style.width = "100%"; // Penuhin bar
+
+          setTimeout(() => {
+            document.getElementById("loading").style.display = "none";
+
+            if (data.success) {
+              // SUKSES!
+              document.getElementById("resultBox").style.display = "block";
+              SoundFX.hover();
+              confetti({
+                particleCount: 200,
+                spread: 150,
+                colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
+              });
+
+              // --- PENTING: GANTI LINK JADI KE STATUS.HTML ---
+              const finalLink = document.getElementById("resultLink");
+              finalLink.innerText = "OPEN STATUS PAGE";
+              // Kita oper URL hasil deploy ke halaman status biar dia nunggu di sana
+              finalLink.href = `/status.html?url=${data.url}`;
+            } else {
+              // GAGAL DARI SERVER
+              alert("DEPLOYMENT FAILED: " + data.error);
+              location.reload();
+            }
+          }, 800);
+        } catch (err) {
+          // GAGAL KONEKSI (Internet mati / Server Down)
+          clearInterval(interval);
+          alert("CONNECTION ERROR: Gagal menghubungi server Hawai.");
+          console.error(err);
+          location.reload();
+        }
       });
       VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
         max: 10,
