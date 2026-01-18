@@ -1,29 +1,38 @@
+// server.js (Vercel Edition)
 require("dotenv").config();
 const express = require("express");
 const multer = require("multer");
 const AdmZip = require("adm-zip");
 const simpleGit = require("simple-git");
 const axios = require("axios");
-const fs = require("fs-extra"); // Kita pakai fs-extra biar gampang pindah file
+const fs = require("fs-extra");
 const path = require("path");
 const cors = require("cors");
-
-// Pastikan install fs-extra dulu: npm install fs-extra
+const os = require("os"); // Penting untuk Vercel
 
 const app = express();
 app.use(cors());
 app.use(express.static("public"));
 
-// --- KONFIGURASI ---
+// --- KONFIGURASI PATH VERCEL (/tmp) ---
+// Vercel hanya membolehkan tulis data di folder /tmp
+const TMP_DIR = os.tmpdir();
+const UPLOAD_DIR = path.join(TMP_DIR, "uploads");
+const EXTRACT_DIR = path.join(TMP_DIR, "temp");
+
+// Pastikan folder temp ada
+fs.ensureDirSync(UPLOAD_DIR);
+fs.ensureDirSync(EXTRACT_DIR);
+
+const upload = multer({ dest: UPLOAD_DIR });
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
 const GITHUB_USER = process.env.GITHUB_USER;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-const upload = multer({ dest: "uploads/" });
-const delay = (ms) => new Promise((res) => setTimeout(res, ms));
-
-// --- 1. MEMBERSIHKAN SAMPAH GIT ---
+// --- FUNGSI CLEANER ---
 const cleanGitTrash = (dir) => {
   if (!fs.existsSync(dir)) return;
   const files = fs.readdirSync(dir);
@@ -31,38 +40,24 @@ const cleanGitTrash = (dir) => {
     const fullPath = path.join(dir, file);
     const stat = fs.statSync(fullPath);
     if (stat.isDirectory()) {
-      if (file === ".git" || file === "__MACOSX") {
-        // Hapus .git dan sampah Mac
-        fs.removeSync(fullPath);
-      } else {
-        cleanGitTrash(fullPath);
-      }
+      if (file === ".git" || file === "__MACOSX") fs.removeSync(fullPath);
+      else cleanGitTrash(fullPath);
     } else {
-      if (file === ".gitmodules" || file === ".DS_Store") {
+      if (file === ".gitmodules" || file === ".DS_Store")
         fs.unlinkSync(fullPath);
-      }
     }
   });
 };
 
-// --- 2. PERBAIKI STRUKTUR FOLDER (ANTI 404) ---
 const fixFolderStructure = async (rootDir) => {
   const files = await fs.readdir(rootDir);
-  // Filter file sampah sistem
   const validFiles = files.filter(
     (f) => !["__MACOSX", ".DS_Store", ".git"].includes(f),
   );
-
-  // Jika isinya cuma 1 folder, berarti user salah nge-zip (Folder dlm Folder)
   if (validFiles.length === 1) {
     const singleItemPath = path.join(rootDir, validFiles[0]);
     const stats = await fs.stat(singleItemPath);
-
     if (stats.isDirectory()) {
-      console.log(
-        `   📂 Mendeteksi folder tunggal: '${validFiles[0]}'. Memindahkan isi ke root...`,
-      );
-      // Pindahkan isi folder anak ke root
       const children = await fs.readdir(singleItemPath);
       for (const child of children) {
         await fs.move(
@@ -71,7 +66,6 @@ const fixFolderStructure = async (rootDir) => {
           { overwrite: true },
         );
       }
-      // Hapus folder anak yang sudah kosong
       await fs.remove(singleItemPath);
     }
   }
@@ -81,7 +75,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
   if (!req.file || !req.body.projectName) {
     return res
       .status(400)
-      .json({ success: false, error: "File/Nama Project kosong!" });
+      .json({ success: false, error: "Data tidak lengkap!" });
   }
 
   const projectName = req.body.projectName
@@ -89,30 +83,25 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
     .replace(/[^a-z0-9]/g, "-");
   const hawaiName = `hawai-${projectName}`;
   const zipPath = req.file.path;
-  const extractPath = path.join(__dirname, "temp", hawaiName);
+  const extractPath = path.join(EXTRACT_DIR, hawaiName);
 
   try {
-    console.log(`\n🚀 Memulai Deploy: ${hawaiName}`);
+    console.log(`🚀 Processing: ${hawaiName}`);
 
-    // 1. EXTRACT ZIP
-    console.log(`[1/7] Extracting ZIP...`);
+    // 1. EXTRACT
     if (fs.existsSync(extractPath)) fs.removeSync(extractPath);
-
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(extractPath, true);
 
-    // 2. BERSIH-BERSIH & RAPIKAN
-    console.log(`[2/7] Merapikan struktur file...`);
-    cleanGitTrash(extractPath); // Hapus .git lama
-    await fixFolderStructure(extractPath); // Pindahkan index.html ke depan
+    // 2. CLEAN & FIX
+    cleanGitTrash(extractPath);
+    await fixFolderStructure(extractPath);
 
-    // Cek apakah index.html ada?
     if (!fs.existsSync(path.join(extractPath, "index.html"))) {
-      console.log("   ⚠️ Peringatan: index.html tidak ditemukan di root!");
+      throw new Error("index.html tidak ditemukan di root file zip!");
     }
 
     // 3. GITHUB REPO
-    console.log(`[3/7] Setup GitHub Repo...`);
     try {
       await axios.post(
         "https://api.github.com/user/repos",
@@ -123,22 +112,22 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         },
         { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
-    } catch (error) {
-      if (error.response?.status !== 422) throw error;
-      console.log("   ⚠️ Repo sudah ada, lanjut update...");
+    } catch (e) {
+      /* Ignore if exists */
     }
 
-    // 4. GIT PUSH (FORCE)
-    console.log(`[4/7] Pushing ke GitHub...`);
+    // 4. GIT OPERATIONS (Using simple-git in /tmp)
     const git = simpleGit(extractPath);
     await git
       .init()
       .addConfig("user.name", "HawaiBot")
       .addConfig("user.email", "bot@hawai.id");
+
     try {
       await git.raw(["branch", "-M", "main"]);
     } catch (e) {}
-    await git.add(".").commit("Auto Deploy by Hawai");
+    await git.add(".");
+    await git.commit("Auto Deploy");
     try {
       await git.addRemote(
         "origin",
@@ -147,8 +136,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
     } catch (e) {}
     await git.push(["-u", "origin", "main", "--force"]);
 
-    // 5. CLOUDFLARE PROJECT
-    console.log(`[5/7] Config Cloudflare Project...`);
+    // 5. CLOUDFLARE
     try {
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects`,
@@ -168,16 +156,13 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         },
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
-    } catch (error) {
-      if (!error.response?.data?.errors?.[0]?.code === 8000009) {
-        console.log("   ℹ️ Project Cloudflare sudah ada.");
-      }
+    } catch (e) {
+      /* Ignore if exists */
     }
 
-    await delay(3000);
+    await delay(2000);
 
-    // 6. TRIGGER DEPLOYMENT
-    console.log(`[6/7] ⚡ MEMAKSA DEPLOYMENT BARU...`);
+    // 6. TRIGGER DEPLOY
     try {
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${hawaiName}/deployments`,
@@ -186,28 +171,22 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         },
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
-      console.log("   ✅ Deployment dipicu manual!");
-    } catch (error) {
-      console.log("   ⚠️ Info Deployment: " + error.message);
-    }
+    } catch (e) {}
 
-    // 7. SELESAI
     const liveUrl = `https://${hawaiName}.pages.dev`;
-    console.log(`[7/7] 🎉 SUKSES! Link: ${liveUrl}`);
 
-    fs.removeSync(extractPath);
-    fs.removeSync(zipPath);
+    // Cleanup /tmp
+    try {
+      fs.removeSync(extractPath);
+      fs.unlinkSync(zipPath);
+    } catch (e) {}
 
     res.json({ success: true, url: liveUrl });
   } catch (error) {
-    console.error("❌ ERROR:", error.message);
-    try {
-      fs.removeSync(zipPath);
-    } catch (e) {}
+    console.error(error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.listen(3000, () =>
-  console.log("🚀 Hawai Hosting Server v6 (Anti-404) Siap!"),
-);
+// PENTING UNTUK VERCEL: Export app, jangan app.listen
+module.exports = app;
