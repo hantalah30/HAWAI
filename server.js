@@ -13,6 +13,10 @@ const os = require("os"); // Penting untuk Vercel
 const app = express();
 app.use(cors());
 app.use(express.static("public"));
+// --- RUTE HALAMAN DEPAN (WAJIB BUAT VERCEL) ---
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // --- KONFIGURASI PATH VERCEL (/tmp) ---
 // Vercel hanya membolehkan tulis data di folder /tmp
