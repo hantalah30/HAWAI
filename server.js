@@ -9,6 +9,8 @@ const fs = require("fs-extra");
 const path = require("path");
 const cors = require("cors");
 const os = require("os");
+// IMPORT GROQ SDK
+const Groq = require("groq-sdk");
 
 const app = express();
 app.use(cors());
@@ -33,7 +35,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-// --- API EDITOR ROUTES ---
+// --- API FILES ---
 app.post("/api/files", async (req, res) => {
   const { repoName } = req.body;
   try {
@@ -85,35 +87,31 @@ app.post("/api/save", async (req, res) => {
   }
 });
 
-// --- NEW: AI PROXY ENDPOINT (Fixes CORS Issue) ---
+// --- BARU: INTEGRASI GROQ SDK DI SERVER ---
 app.post("/api/chat", async (req, res) => {
   const { apiKey, messages } = req.body;
 
   if (!apiKey) return res.status(400).json({ error: "API Key Missing" });
 
   try {
-    const response = await axios.post(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        messages: messages,
-        model: "llama3-8b-8192",
-        temperature: 0.5,
-        max_tokens: 1024,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      },
-    );
+    // Inisialisasi SDK dengan Key dari Client
+    const groq = new Groq({ apiKey: apiKey });
 
-    res.json(response.data);
-  } catch (error) {
-    console.error("AI Error:", error.response?.data || error.message);
-    res.status(500).json({
-      error: error.response?.data?.error?.message || "Failed to contact AI",
+    const chatCompletion = await groq.chat.completions.create({
+      messages: messages,
+      model: "llama3-8b-8192", // Model yang cepat dan stabil
+      temperature: 0.5,
+      max_tokens: 1024,
+      top_p: 1,
+      stream: false, // Kita matikan stream dulu biar gampang handle di frontend
+      stop: null,
     });
+
+    // Kirim hasil balik ke frontend
+    res.json(chatCompletion);
+  } catch (error) {
+    console.error("Groq SDK Error:", error);
+    res.status(500).json({ error: error.message || "AI Error" });
   }
 });
 

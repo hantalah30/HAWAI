@@ -630,8 +630,6 @@
       let currentPath = "";
       let isPreviewOpen = false;
       let debounceTimer = null;
-
-      // Ambil GROQ API Key
       let GROQ_API_KEY = localStorage.getItem("HAWAI_GROQ_KEY") || "";
 
       const projectFiles = {};
@@ -722,7 +720,7 @@
         loadFiles();
       });
 
-      /* --- AI LOGIC (GROQ) --- */
+      /* --- AI LOGIC (VIA BACKEND PROXY) --- */
       function toggleAI(forceOpen = false) {
         const panel = document.getElementById("aiPanel");
         const btn = document.getElementById("btnAiToggle");
@@ -751,7 +749,7 @@
           GROQ_API_KEY = key;
           document.getElementById("settingsModal").style.display = "none";
           showToast("API Key Saved!", "success");
-          appendChatMessage("ai", "✅ API Key tersimpan. Ready to code!");
+          appendChatMessage("ai", "✅ API Key tersimpan. Siap membantu!");
         } else {
           showToast("API Key tidak boleh kosong", "error");
         }
@@ -776,41 +774,52 @@
 
         const currentCode = editor.getValue();
         const context = `
-Kamu adalah AI Assistant untuk Web Development (HTML/CSS/JS).
-File: ${currentPath || "Untitled"}
-Code:
+Kamu adalah AI Coding Assistant bernama Hawai Copilot.
+File saat ini: ${currentPath || "Untitled"}
+Code Context:
 \`\`\`
-${currentCode.substring(0, 6000)}
+${currentCode.substring(0, 5000)}
 \`\`\`
-User Request: ${prompt}
-Jawab singkat, jelas, dan berikan kode solusi jika perlu.
+User Query: ${prompt}
+Berikan jawaban teknis, singkat, dan sertakan kode perbaikan jika perlu. Gunakan format Markdown.
         `;
 
         const loadingId = appendChatMessage("ai", "Thinking... ⚡");
 
         try {
-          // CALL SERVER PROXY (BYPASS BROWSER CORS)
+          // KIRIM KE SERVER KITA (Proxy ke Groq SDK)
           const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               apiKey: GROQ_API_KEY,
               messages: [
-                { role: "system", content: "You are a coding expert." },
+                {
+                  role: "system",
+                  content: "You are an expert coding assistant.",
+                },
                 { role: "user", content: context },
               ],
             }),
           });
+
           const data = await response.json();
           document.getElementById(loadingId).remove();
 
-          if (data.choices)
+          if (data.choices && data.choices[0]) {
             appendChatMessage("ai", data.choices[0].message.content);
-          else
-            appendChatMessage("ai", "⚠️ Error: " + (data.error || "Unknown"));
+          } else if (data.error) {
+            appendChatMessage("ai", `⚠️ Error dari Groq: ${data.error}`);
+          } else {
+            appendChatMessage("ai", "⚠️ Tidak ada respon dari AI.");
+          }
         } catch (error) {
+          console.error(error);
           document.getElementById(loadingId).remove();
-          appendChatMessage("ai", "❌ Connection Error to Backend.");
+          appendChatMessage(
+            "ai",
+            `❌ Server Connection Error. Pastikan server.js berjalan.`,
+          );
         }
       }
 
@@ -877,7 +886,6 @@ Jawab singkat, jelas, dan berikan kode solusi jika perlu.
             `<head><base href="${liveUrl}/">`,
           );
 
-        // Inject CSS
         const cssFiles = Object.values(projectFiles).filter((f) =>
           f.name.endsWith(".css"),
         );
@@ -899,7 +907,6 @@ Jawab singkat, jelas, dan berikan kode solusi jika perlu.
             );
         });
 
-        // Inject JS
         const jsFiles = Object.values(projectFiles).filter((f) =>
           f.name.endsWith(".js"),
         );
