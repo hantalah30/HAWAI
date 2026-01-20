@@ -416,7 +416,113 @@
         position: relative;
         overflow: hidden;
         pointer-events: auto;
+        min-height: 500px;
       }
+
+      /* --- NEW STYLES: TABS --- */
+      .hud-tabs {
+        display: flex;
+        border-bottom: 1px solid #333;
+        margin-bottom: 20px;
+      }
+      .hud-tab {
+        padding: 10px 20px;
+        font-family: "Rajdhani";
+        font-weight: 700;
+        color: #666;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: 0.3s;
+      }
+      .hud-tab:hover {
+        color: white;
+      }
+      .hud-tab.active {
+        color: var(--neon-blue);
+        border-bottom-color: var(--neon-blue);
+      }
+      .panel {
+        display: none;
+        animation: fadeIn 0.5s;
+      }
+      .panel.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* --- NEW STYLES: HISTORY LIST --- */
+      .history-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        max-height: 350px;
+        overflow-y: auto;
+        padding-right: 5px;
+      }
+      .history-item {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid #333;
+        padding: 15px;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: 0.3s;
+      }
+      .history-item:hover {
+        border-color: var(--neon-purple);
+        background: rgba(188, 19, 254, 0.05);
+      }
+      .h-info {
+        font-family: "JetBrains Mono";
+      }
+      .h-name {
+        font-size: 1rem;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .h-date {
+        font-size: 0.7rem;
+        color: #666;
+      }
+      .h-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .btn-mini {
+        padding: 5px 15px;
+        font-family: "Rajdhani";
+        font-weight: 600;
+        font-size: 0.8rem;
+        border: 1px solid #444;
+        color: #aaa;
+        text-decoration: none;
+        transition: 0.2s;
+        cursor: pointer;
+      }
+      .btn-mini:hover {
+        border-color: var(--neon-blue);
+        color: var(--neon-blue);
+      }
+      .btn-mini.edit {
+        border-color: var(--neon-purple);
+        color: var(--neon-purple);
+      }
+      .btn-mini.edit:hover {
+        background: var(--neon-purple);
+        color: black;
+      }
+
       .warning-box {
         background: rgba(252, 238, 10, 0.05);
         border: 1px solid rgba(252, 238, 10, 0.3);
@@ -776,94 +882,120 @@
             data-tilt-glare
             data-tilt-max-glare="0.1"
           >
-            <div class="upload-overlay" id="loadingOverlay">
-              <div class="hex-spinner"></div>
-              <div class="upload-status">ENCRYPTING ASSETS...</div>
-            </div>
-
-            <div class="warning-box">
-              <i class="ri-alert-fill warning-icon"></i>
-              <div class="warning-text">
-                <strong>SYSTEM NOTICE:</strong><br />Platform only supports
-                <strong>Static Files</strong> (HTML, CSS, JS).
+            <div class="hud-tabs">
+              <div class="hud-tab active" onclick="switchTab('deploy')">
+                DEPLOYMENT
               </div>
+              <div class="hud-tab" onclick="switchTab('history')">HISTORY</div>
             </div>
 
-            <div class="auth-wall" id="authWall">
-              <i
-                class="ri-lock-2-fill"
-                style="font-size: 3rem; color: var(--neon-blue)"
-              ></i>
-              <div style="font-family: &quot;JetBrains Mono&quot;; color: #888">
-                AUTHENTICATION REQUIRED TO DEPLOY
+            <div id="panel-deploy" class="panel active">
+              <div class="upload-overlay" id="loadingOverlay">
+                <div class="hex-spinner"></div>
+                <div class="upload-status">ENCRYPTING ASSETS...</div>
               </div>
-              <button class="btn-google hover-trigger" id="btnLogin">
-                <i class="ri-google-fill"></i> LOGIN WITH GOOGLE
-              </button>
-            </div>
 
-            <form id="deployForm" style="display: none">
-              <label
-                style="
-                  font-family: &quot;JetBrains Mono&quot;;
-                  font-size: 0.7rem;
-                  color: #666;
-                "
-                >// PROJECT_ID</label
-              >
-              <input
-                type="text"
-                class="input-line hover-trigger"
-                id="pName"
-                placeholder="my-project-v1"
-                required
-                autocomplete="off"
-              />
-              <div class="upload-hex hover-trigger" id="dropArea">
+              <div class="warning-box">
+                <i class="ri-alert-fill warning-icon"></i>
+                <div class="warning-text">
+                  <strong>SYSTEM NOTICE:</strong><br />Platform only supports
+                  <strong>Static Files</strong> (HTML, CSS, JS).
+                </div>
+              </div>
+
+              <div class="auth-wall" id="authWall">
                 <i
-                  class="ri-upload-cloud-fill"
-                  style="font-size: 2rem; color: #666"
-                  id="fileIcon"
+                  class="ri-lock-2-fill"
+                  style="font-size: 3rem; color: var(--neon-blue)"
                 ></i>
                 <div
-                  style="
-                    margin-top: 10px;
-                    font-family: &quot;JetBrains Mono&quot;;
-                    font-size: 0.8rem;
-                    color: #888;
-                  "
-                  id="fileMsg"
+                  style="font-family: &quot;JetBrains Mono&quot;; color: #888"
                 >
-                  DROP .ZIP SOURCE CODE
+                  AUTHENTICATION REQUIRED TO DEPLOY
                 </div>
-                <input
-                  type="file"
-                  id="pFile"
-                  class="file-input"
-                  accept=".zip"
-                  required
-                />
+                <button class="btn-google hover-trigger" id="btnLogin">
+                  <i class="ri-google-fill"></i> LOGIN WITH GOOGLE
+                </button>
               </div>
-              <button type="submit" class="btn-cyber hover-trigger">
-                DEPLOY NOW
-              </button>
-            </form>
 
-            <div class="success-terminal" id="resultBox">
-              <div style="font-size: 2rem; margin-bottom: 10px">✅</div>
-              <div>DEPLOYMENT SUCCESSFUL</div>
-              <a
-                id="resultLink"
-                href="#"
-                target="_blank"
-                style="
-                  display: block;
-                  margin-top: 10px;
-                  color: white;
-                  text-decoration: underline;
-                "
-                >OPEN STATUS PAGE</a
-              >
+              <form id="deployForm" style="display: none">
+                <label
+                  style="
+                    font-family: &quot;JetBrains Mono&quot;;
+                    font-size: 0.7rem;
+                    color: #666;
+                  "
+                  >// PROJECT_ID</label
+                >
+                <input
+                  type="text"
+                  class="input-line hover-trigger"
+                  id="pName"
+                  placeholder="my-project-v1"
+                  required
+                  autocomplete="off"
+                />
+                <div class="upload-hex hover-trigger" id="dropArea">
+                  <i
+                    class="ri-upload-cloud-fill"
+                    style="font-size: 2rem; color: #666"
+                    id="fileIcon"
+                  ></i>
+                  <div
+                    style="
+                      margin-top: 10px;
+                      font-family: &quot;JetBrains Mono&quot;;
+                      font-size: 0.8rem;
+                      color: #888;
+                    "
+                    id="fileMsg"
+                  >
+                    DROP .ZIP SOURCE CODE
+                  </div>
+                  <input
+                    type="file"
+                    id="pFile"
+                    class="file-input"
+                    accept=".zip"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn-cyber hover-trigger">
+                  DEPLOY NOW
+                </button>
+              </form>
+
+              <div class="success-terminal" id="resultBox">
+                <div style="font-size: 2rem; margin-bottom: 10px">✅</div>
+                <div>DEPLOYMENT SUCCESSFUL</div>
+                <a
+                  id="resultLink"
+                  href="#"
+                  target="_blank"
+                  style="
+                    display: block;
+                    margin-top: 10px;
+                    color: white;
+                    text-decoration: underline;
+                  "
+                  >OPEN STATUS PAGE</a
+                >
+              </div>
+            </div>
+
+            <div id="panel-history" class="panel">
+              <div class="history-list" id="historyList">
+                <div
+                  style="
+                    text-align: center;
+                    color: #666;
+                    margin-top: 50px;
+                    font-family: &quot;JetBrains Mono&quot;;
+                  "
+                >
+                  Loading history...
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -943,6 +1075,15 @@
         signInWithPopup,
         onAuthStateChanged,
       } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        query,
+        where,
+        getDocs,
+        orderBy,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
       // --- FIREBASE CONFIGURATION (ISI PUNYA KAMU DI SINI) ---
       const firebaseConfig = {
@@ -956,8 +1097,10 @@
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
+      const db = getFirestore(app);
       const provider = new GoogleAuthProvider();
 
+      let currentUser = null;
       let currentUserEmail = "";
 
       const btnLogin = document.getElementById("btnLogin");
@@ -966,6 +1109,7 @@
       const userBadge = document.getElementById("userBadge");
       const navAvatar = document.getElementById("navAvatar");
       const navName = document.getElementById("navName");
+      const historyList = document.getElementById("historyList");
 
       // LOGIN HANDLER
       btnLogin.addEventListener("click", () => {
@@ -983,6 +1127,7 @@
       onAuthStateChanged(auth, (user) => {
         if (user) {
           // USER LOGIN
+          currentUser = user;
           currentUserEmail = user.email;
           authWall.style.display = "none";
           deployForm.style.display = "block";
@@ -994,11 +1139,139 @@
 
           // Animasi Form Muncul
           gsap.from("#deployForm", { opacity: 0, y: 20, duration: 0.5 });
+
+          // Load User History
+          loadUserHistory(user.email);
         } else {
           // USER LOGOUT
+          currentUser = null;
+          currentUserEmail = "";
           authWall.style.display = "flex";
           deployForm.style.display = "none";
           userBadge.style.display = "none";
+          historyList.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">Please login to view history</div>`;
+        }
+      });
+
+      // --- FIRESTORE: LOAD HISTORY ---
+      async function loadUserHistory(email) {
+        historyList.innerHTML = `<div style="text-align: center; color: var(--neon-blue);">Fetching Data...</div>`;
+        try {
+          const q = query(
+            collection(db, "deployments"),
+            where("userEmail", "==", email),
+            orderBy("createdAt", "desc"),
+          );
+
+          const querySnapshot = await getDocs(q);
+          historyList.innerHTML = ""; // Clear loader
+
+          if (querySnapshot.empty) {
+            historyList.innerHTML = `<div style="text-align: center; color: #444; margin-top: 20px;">No deployments yet.</div>`;
+            return;
+          }
+
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const date = data.createdAt
+              ? new Date(data.createdAt.seconds * 1000).toLocaleDateString()
+              : "-";
+
+            // Create Card HTML
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+              <div class="h-info">
+                <div class="h-name">${data.projectName}</div>
+                <div class="h-date">${date} • ${data.repoName || "Unknown Repo"}</div>
+              </div>
+              <div class="h-actions">
+                <a href="${data.url}" target="_blank" class="btn-mini">VISIT</a>
+                <a href="/editor.html?repo=${data.repoName}&url=${data.url}" class="btn-mini edit">EDIT</a>
+              </div>
+            `;
+            historyList.appendChild(item);
+          });
+        } catch (error) {
+          console.error("Firestore Error:", error);
+          historyList.innerHTML = `<div style="color:red; font-size:0.8rem; text-align:center;">Error loading history. Check console.</div>`;
+        }
+      }
+
+      // --- FORM SUBMIT HANDLER ---
+      const deployFormEl = document.getElementById("deployForm");
+      const fileInputEl = document.getElementById("pFile");
+      const dropAreaEl = document.getElementById("dropArea");
+
+      fileInputEl.addEventListener("change", () => {
+        if (fileInputEl.files.length > 0) {
+          document.getElementById("fileMsg").innerText =
+            fileInputEl.files[0].name;
+          document.getElementById("fileMsg").style.color = "var(--neon-green)";
+          document.getElementById("fileIcon").style.color = "var(--neon-green)";
+          dropAreaEl.style.borderColor = "var(--neon-green)";
+          dropAreaEl.style.background = "rgba(0, 255, 157, 0.05)";
+        }
+      });
+
+      deployFormEl.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Show Loading
+        document.getElementById("loadingOverlay").style.display = "flex";
+        await new Promise((r) => setTimeout(r, 4000)); // Delay effect
+
+        const formData = new FormData();
+        formData.append("projectName", document.getElementById("pName").value);
+        formData.append("file", fileInputEl.files[0]);
+        if (currentUserEmail) {
+          formData.append("userEmail", currentUserEmail);
+        }
+
+        try {
+          const res = await fetch("/deploy", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          await new Promise((r) => setTimeout(r, 1000));
+          document.getElementById("loadingOverlay").style.display = "none";
+
+          if (data.success) {
+            // --- SAVE TO FIRESTORE ---
+            try {
+              await addDoc(collection(db, "deployments"), {
+                userEmail: currentUserEmail,
+                projectName: document.getElementById("pName").value,
+                repoName: data.repo,
+                url: data.url,
+                createdAt: new Date(),
+              });
+              // Refresh History
+              loadUserHistory(currentUserEmail);
+            } catch (err) {
+              console.error("Failed to save history", err);
+            }
+
+            // Success UI
+            document.getElementById("deployForm").style.display = "none";
+            document.getElementById("resultBox").style.display = "block";
+            confetti({
+              particleCount: 200,
+              spread: 150,
+              colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
+            });
+
+            const finalLink = document.getElementById("resultLink");
+            finalLink.href = `/status.html?url=${data.url}&repo=${data.repo}`;
+          } else {
+            alert("DEPLOYMENT FAILED: " + data.error);
+            location.reload();
+          }
+        } catch (err) {
+          alert("CONNECTION ERROR");
+          console.error(err);
+          location.reload();
         }
       });
 
@@ -1007,7 +1280,7 @@
     </script>
 
     <script>
-      /* --- AUDIO --- */
+      /* --- AUDIO & GLOBAL UI --- */
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       let audioCtx;
       const SoundFX = {
@@ -1230,69 +1503,24 @@
           e.addEventListener("click", () => SoundFX.click());
         });
 
-      /* --- DEPLOY HANDLER --- */
-      const fileInput = document.getElementById("pFile"),
-        dropArea = document.getElementById("dropArea"),
-        form = document.getElementById("deployForm");
-      fileInput.addEventListener("change", () => {
-        if (fileInput.files.length > 0) {
-          document.getElementById("fileMsg").innerText =
-            fileInput.files[0].name;
-          document.getElementById("fileMsg").style.color = "var(--neon-green)";
-          document.getElementById("fileIcon").style.color = "var(--neon-green)";
-          dropArea.style.borderColor = "var(--neon-green)";
-          dropArea.style.background = "rgba(0, 255, 157, 0.05)";
-          SoundFX.hover();
-        }
-      });
+      /* --- TAB SWITCHER LOGIC --- */
+      window.switchTab = (tab) => {
+        document
+          .querySelectorAll(".hud-tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".panel")
+          .forEach((p) => p.classList.remove("active"));
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+        if (tab === "deploy") {
+          document.querySelectorAll(".hud-tab")[0].classList.add("active");
+          document.getElementById("panel-deploy").classList.add("active");
+        } else {
+          document.querySelectorAll(".hud-tab")[1].classList.add("active");
+          document.getElementById("panel-history").classList.add("active");
+        }
         SoundFX.click();
-        document.getElementById("loadingOverlay").style.display = "flex";
-
-        // Artificial Delay
-        await new Promise((r) => setTimeout(r, 4000));
-
-        const formData = new FormData();
-        formData.append("projectName", document.getElementById("pName").value);
-        formData.append("file", fileInput.files[0]);
-
-        // --- ADD USER EMAIL TO FORM DATA ---
-        if (window.getUserEmail) {
-          formData.append("userEmail", window.getUserEmail());
-        }
-
-        try {
-          const res = await fetch("/deploy", {
-            method: "POST",
-            body: formData,
-          });
-          const data = await res.json();
-          await new Promise((r) => setTimeout(r, 1000));
-          document.getElementById("loadingOverlay").style.display = "none";
-
-          if (data.success) {
-            form.style.display = "none";
-            document.getElementById("resultBox").style.display = "block";
-            SoundFX.hover();
-            confetti({
-              particleCount: 200,
-              spread: 150,
-              colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
-            });
-            const finalLink = document.getElementById("resultLink");
-            finalLink.href = `/status.html?url=${data.url}&repo=${data.repo}`;
-          } else {
-            alert("DEPLOYMENT FAILED: " + data.error);
-            location.reload();
-          }
-        } catch (err) {
-          alert("CONNECTION ERROR");
-          console.error(err);
-          location.reload();
-        }
-      });
+      };
 
       gsap.registerPlugin(ScrollTrigger);
       gsap.from(".bio-wrapper > *", {
