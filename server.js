@@ -12,8 +12,7 @@ const os = require("os");
 
 const app = express();
 app.use(cors());
-
-// ARTIKAN FOLDER PUBLIC SECARA EKSPLISIT
+app.use(express.json()); // Penting agar bisa baca JSON dari editor
 app.use(express.static(path.join(__dirname, "public")));
 
 // HALAMAN DEPAN
@@ -21,7 +20,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// KONFIGURASI PATH VERCEL (/tmp)
+// KONFIGURASI PATH
 const TMP_DIR = os.tmpdir();
 const UPLOAD_DIR = path.join(TMP_DIR, "uploads");
 const EXTRACT_DIR = path.join(TMP_DIR, "temp");
@@ -37,7 +36,77 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-// --- FUNGSI CLEANER ---
+// --- API BARU: AMBIL LIST FILE DARI GITHUB ---
+app.post("/api/files", async (req, res) => {
+  const { repoName } = req.body;
+  try {
+    // Ambil struktur folder root
+    const response = await axios.get(
+      `https://api.github.com/repos/${GITHUB_USER}/${repoName}/contents/`,
+      { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
+    );
+
+    // Filter hanya file teks yang bisa diedit (html, css, js, txt, json)
+    const files = response.data
+      .filter(
+        (f) =>
+          f.type === "file" && f.name.match(/\.(html|css|js|json|txt|md)$/i),
+      )
+      .map((f) => ({ name: f.name, path: f.path, sha: f.sha }));
+
+    res.json({ success: true, files });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Gagal mengambil file" });
+  }
+});
+
+// --- API BARU: BACA ISI FILE ---
+app.post("/api/read", async (req, res) => {
+  const { repoName, filePath } = req.body;
+  try {
+    const response = await axios.get(
+      `https://api.github.com/repos/${GITHUB_USER}/${repoName}/contents/${filePath}`,
+      { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
+    );
+
+    // GitHub kasih konten dalam format Base64, kita decode ke Text biasa
+    const content = Buffer.from(response.data.content, "base64").toString(
+      "utf-8",
+    );
+    res.json({ success: true, content, sha: response.data.sha });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Gagal membaca file" });
+  }
+});
+
+// --- API BARU: SIMPAN (UPDATE) FILE KE GITHUB ---
+app.post("/api/save", async (req, res) => {
+  const { repoName, filePath, content, sha } = req.body;
+  try {
+    // Encode balik ke Base64
+    const contentEncoded = Buffer.from(content).toString("base64");
+
+    await axios.put(
+      `https://api.github.com/repos/${GITHUB_USER}/${repoName}/contents/${filePath}`,
+      {
+        message: "Update via Hawai Editor",
+        content: contentEncoded,
+        sha: sha, // Wajib kirim SHA lama untuk verifikasi update
+      },
+      { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
+    );
+
+    // Trigger Cloudflare Re-deployment (Optional, biasanya otomatis kalau connect github)
+    // Tapi kita bisa pancing biar cepet (opsional)
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, error: "Gagal menyimpan file" });
+  }
+});
+
+// --- FUNGSI DEPLOY (YANG LAMA) ---
 const cleanGitTrash = (dir) => {
   if (!fs.existsSync(dir)) return;
   const files = fs.readdirSync(dir);
@@ -54,14 +123,9 @@ const cleanGitTrash = (dir) => {
   });
 };
 
-// --- FUNGSI PINTAR: CARI INDEX.HTML SAMPAI KETEMU ---
 async function findIndexDir(dir) {
   const items = await fs.readdir(dir);
-
-  // Cek apakah index.html ada di sini?
   if (items.includes("index.html")) return dir;
-
-  // Kalau tidak, cari di folder anaknya
   for (const item of items) {
     const fullPath = path.join(dir, item);
     try {
@@ -96,25 +160,15 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
 
   try {
     console.log(`🚀 Processing: ${hawaiName}`);
-
-    // 1. EXTRACT
     if (fs.existsSync(extractPath)) fs.removeSync(extractPath);
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(extractPath, true);
 
-    // 2. CLEAN & SMART FIX
     cleanGitTrash(extractPath);
-
-    // Cari folder asli yang ada index.html-nya
     const realRoot = await findIndexDir(extractPath);
+    if (!realRoot) throw new Error("index.html tidak ditemukan!");
 
-    if (!realRoot) {
-      throw new Error("index.html tidak ditemukan di dalam file ZIP manapun!");
-    }
-
-    // Jika index.html ada di dalam folder anak, pindahkan isinya ke root ekstraksi
     if (realRoot !== extractPath) {
-      console.log(`📂 Memindahkan file dari ${realRoot} ke root...`);
       const files = await fs.readdir(realRoot);
       for (const file of files) {
         await fs.move(path.join(realRoot, file), path.join(extractPath, file), {
@@ -123,47 +177,35 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       }
     }
 
-    // 3. GITHUB REPO
     try {
       await axios.post(
         "https://api.github.com/user/repos",
-        {
-          name: hawaiName,
-          private: false,
-          auto_init: false,
-        },
+        { name: hawaiName, private: false, auto_init: false },
         { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
       await delay(1000);
     } catch (e) {
-      console.log("Repo might exist...");
+      console.log("Repo exists...");
     }
 
-    // 4. GIT OPERATIONS
     await git.init({ fs, dir: extractPath, defaultBranch: "main" });
-
     const allFiles = fs.readdirSync(extractPath);
     for (const file of allFiles) {
-      if (file !== ".git") {
+      if (file !== ".git")
         await git.add({ fs, dir: extractPath, filepath: file });
-      }
     }
-
     await git.commit({
       fs,
       dir: extractPath,
       author: { name: "HawaiBot", email: "bot@hawai.id" },
       message: "Auto Deploy",
     });
-
     await git.addRemote({
       fs,
       dir: extractPath,
       remote: "origin",
       url: `https://github.com/${GITHUB_USER}/${hawaiName}.git`,
     });
-
-    console.log("Pushing...");
     await git.push({
       fs,
       http,
@@ -174,7 +216,6 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       force: true,
     });
 
-    // 5. CLOUDFLARE PAGES
     try {
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects`,
@@ -194,13 +235,9 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         },
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
-    } catch (e) {
-      /* Ignore */
-    }
+    } catch (e) {}
 
     await delay(2000);
-
-    // 6. TRIGGER DEPLOY
     try {
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${hawaiName}/deployments`,
@@ -215,7 +252,8 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       fs.unlinkSync(zipPath);
     } catch (e) {}
 
-    res.json({ success: true, url: liveUrl });
+    // PENTING: Kirim juga nama repo agar frontend tahu harus ngedit repo mana
+    res.json({ success: true, url: liveUrl, repo: hawaiName });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, error: error.message });

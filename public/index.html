@@ -1288,7 +1288,8 @@
               const finalLink = document.getElementById("resultLink");
               finalLink.innerText = "OPEN STATUS PAGE";
               // Kita oper URL hasil deploy ke halaman status biar dia nunggu di sana
-              finalLink.href = `/status.html?url=${data.url}`;
+              // Kirim juga nama repo agar bisa dipakai di editor
+              finalLink.href = `/status.html?url=${data.url}&repo=${data.repo}`;
             } else {
               // GAGAL DARI SERVER
               alert("DEPLOYMENT FAILED: " + data.error);

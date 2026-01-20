@@ -615,8 +615,40 @@
           }
 
           if (progress >= 100) {
-            clearInterval(deployInterval);
-            finish();
+            clearInterval(timer);
+
+            // Ubah Tampilan jadi Sukses
+            statusEl.innerText = "SYSTEM ONLINE. READY.";
+            statusEl.style.color = "#00ff9d";
+            document.querySelector(".timer").style.display = "none";
+
+            // Buat Container Tombol
+            const btnContainer = document.createElement("div");
+            btnContainer.style.marginTop = "30px";
+            btnContainer.style.display = "flex";
+            btnContainer.style.gap = "20px";
+            btnContainer.style.justifyContent = "center";
+
+            // Tombol Buka Web
+            const btnOpen = document.createElement("a");
+            btnOpen.href = targetUrl;
+            btnOpen.target = "_blank";
+            btnOpen.innerText = "OPEN WEBSITE";
+            btnOpen.style.cssText =
+              "padding: 15px 30px; background: #00f3ff; color: black; text-decoration: none; font-weight: bold; font-family: 'Rajdhani'; border-radius: 4px; border: 1px solid #00f3ff; transition:0.3s;";
+
+            // Tombol Edit Code (Mengambil parameter repo dari URL jika ada)
+            const repoName = params.get("repo"); // Kita akan oper ini dari index.html nanti
+            const btnEdit = document.createElement("a");
+            btnEdit.href = `/editor.html?repo=${repoName}&url=${targetUrl}`;
+            btnEdit.innerText = "EDIT CODE";
+            btnEdit.style.cssText =
+              "padding: 15px 30px; background: transparent; color: #00f3ff; text-decoration: none; font-weight: bold; font-family: 'Rajdhani'; border-radius: 4px; border: 1px solid #00f3ff; transition:0.3s;";
+
+            btnContainer.appendChild(btnOpen);
+            if (repoName) btnContainer.appendChild(btnEdit); // Cuma muncul kalau ada repo info
+
+            document.querySelector(".status-box").appendChild(btnContainer);
           }
         }, 30); // 30ms tick
       }

@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hawai Code Editor</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #050505;
+        --sidebar: #0a0f14;
+        --neon: #00f3ff;
+        --text: #ccc;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "JetBrains Mono", monospace;
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
+      }
+
+      /* SIDEBAR */
+      .sidebar {
+        width: 250px;
+        background: var(--sidebar);
+        border-right: 1px solid #333;
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar-header {
+        padding: 20px;
+        font-family: "Rajdhani";
+        font-size: 1.5rem;
+        color: var(--neon);
+        border-bottom: 1px solid #333;
+      }
+      .file-list {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+      }
+      .file-item {
+        padding: 10px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .file-item:hover {
+        background: rgba(0, 243, 255, 0.1);
+        color: white;
+      }
+      .file-item.active {
+        background: rgba(0, 243, 255, 0.2);
+        color: var(--neon);
+        border-left: 3px solid var(--neon);
+      }
+
+      /* EDITOR AREA */
+      .main-editor {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .editor-header {
+        padding: 10px 20px;
+        background: #111;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .file-name-display {
+        font-size: 0.9rem;
+        color: #888;
+      }
+
+      /* TEXTAREA (Simple Editor) */
+      #codeArea {
+        flex: 1;
+        background: #080808;
+        color: #eee;
+        border: none;
+        padding: 20px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: none;
+        outline: none;
+      }
+
+      /* BUTTONS */
+      .btn {
+        padding: 8px 20px;
+        border: 1px solid var(--neon);
+        background: transparent;
+        color: var(--neon);
+        cursor: pointer;
+        font-family: "Rajdhani";
+        font-weight: 700;
+        transition: 0.3s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9rem;
+      }
+      .btn:hover {
+        background: var(--neon);
+        color: black;
+      }
+      .btn-save {
+        background: var(--neon);
+        color: black;
+      }
+      .btn-save:hover {
+        box-shadow: 0 0 20px var(--neon);
+      }
+
+      /* LOADING OVERLAY */
+      #loader {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 999;
+        display: none;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid transparent;
+        border-top-color: var(--neon);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader">
+      <div class="spinner"></div>
+      <div
+        id="loaderText"
+        style="color: white; font-family: &quot;Rajdhani&quot;"
+      >
+        PROCESSING...
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="sidebar-header"><i class="ri-code-box-line"></i> EDITOR</div>
+      <div class="file-list" id="fileList"></div>
+      <div style="padding: 20px; border-top: 1px solid #333">
+        <a href="/" class="btn" style="width: 100%; justify-content: center"
+          >EXIT EDITOR</a
+        >
+      </div>
+    </div>
+
+    <div class="main-editor">
+      <div class="editor-header">
+        <span class="file-name-display" id="currentFile">SELECT A FILE</span>
+        <div style="display: flex; gap: 10px">
+          <a id="liveLink" href="#" target="_blank" class="btn"
+            >OPEN LIVE SITE</a
+          >
+          <button class="btn btn-save" onclick="saveFile()">
+            <i class="ri-save-3-line"></i> SAVE & DEPLOY
+          </button>
+        </div>
+      </div>
+      <textarea id="codeArea" spellcheck="false" disabled></textarea>
+    </div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const repoName = params.get("repo");
+      const liveUrl = params.get("url");
+
+      if (!repoName) {
+        alert("No repository specified!");
+        window.location.href = "/";
+      }
+
+      document.getElementById("liveLink").href = liveUrl;
+
+      let currentSha = "";
+      let currentPath = "";
+
+      // 1. LOAD FILE LIST
+      async function loadFiles() {
+        showLoader(true, "FETCHING FILES...");
+        try {
+          const res = await fetch("/api/files", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ repoName }),
+          });
+          const data = await res.json();
+
+          const list = document.getElementById("fileList");
+          list.innerHTML = "";
+
+          if (data.success) {
+            data.files.forEach((file) => {
+              const div = document.createElement("div");
+              div.className = "file-item";
+              div.innerHTML = `<i class="ri-file-code-line"></i> ${file.name}`;
+              div.onclick = () => loadContent(file.path, div);
+              list.appendChild(div);
+            });
+
+            // Auto load index.html if exists
+            const indexFile = data.files.find((f) => f.name === "index.html");
+            if (indexFile) {
+              // Trigger click manually later or handle logic
+            }
+          }
+        } catch (e) {
+          alert("Error loading files");
+        }
+        showLoader(false);
+      }
+
+      // 2. LOAD FILE CONTENT
+      async function loadContent(path, element) {
+        // Highlight active sidebar
+        document
+          .querySelectorAll(".file-item")
+          .forEach((el) => el.classList.remove("active"));
+        element.classList.add("active");
+
+        showLoader(true, "READING...");
+        try {
+          const res = await fetch("/api/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ repoName, filePath: path }),
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            document.getElementById("codeArea").value = data.content;
+            document.getElementById("codeArea").disabled = false;
+            document.getElementById("currentFile").innerText = path;
+            currentSha = data.sha;
+            currentPath = path;
+          }
+        } catch (e) {
+          alert("Error reading file");
+        }
+        showLoader(false);
+      }
+
+      // 3. SAVE & DEPLOY
+      async function saveFile() {
+        if (!currentPath) return alert("No file selected!");
+
+        showLoader(true, "SAVING & REDEPLOYING...");
+        const content = document.getElementById("codeArea").value;
+
+        try {
+          const res = await fetch("/api/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              repoName,
+              filePath: currentPath,
+              content,
+              sha: currentSha,
+            }),
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            alert(
+              "✅ File Saved! Cloudflare is rebuilding your site.\nWait ~30 seconds and refresh the Live Site.",
+            );
+            // Reload content to get new SHA
+            loadContent(
+              currentPath,
+              document.querySelector(".file-item.active"),
+            );
+          } else {
+            alert("Failed to save.");
+          }
+        } catch (e) {
+          alert("Error saving file");
+        }
+        showLoader(false);
+      }
+
+      function showLoader(show, text) {
+        const l = document.getElementById("loader");
+        l.style.display = show ? "flex" : "none";
+        if (text) document.getElementById("loaderText").innerText = text;
+      }
+
+      // Init
+      loadFiles();
+    </script>
+  </body>
+</html>
