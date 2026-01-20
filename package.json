@@ -23,7 +23,7 @@
     "firebase-admin": "^13.6.0",
     "fs-extra": "^11.3.3",
     "groq-sdk": "^0.37.0",
-    "isomorphic-git": "^1.25.10",
+    "isomorphic-git": "^1.36.1",
     "multer": "^2.0.2"
   }
 }

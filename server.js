@@ -9,17 +9,18 @@ const fs = require("fs-extra");
 const path = require("path");
 const cors = require("cors");
 const os = require("os");
-// IMPORT GROQ SDK
-const Groq = require("groq-sdk");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (req, res) =>
-  res.sendFile(path.join(__dirname, "public", "index.html")),
-);
+// --- KONFIGURASI ---
+const PORT = process.env.PORT || 3000;
+const GITHUB_USER = process.env.GITHUB_USER;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
+const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
 const TMP_DIR = os.tmpdir();
 const UPLOAD_DIR = path.join(TMP_DIR, "uploads");
@@ -30,12 +31,52 @@ fs.ensureDirSync(EXTRACT_DIR);
 const upload = multer({ dest: UPLOAD_DIR });
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
-const GITHUB_USER = process.env.GITHUB_USER;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
-const CF_API_TOKEN = process.env.CF_API_TOKEN;
+// HALAMAN DEPAN
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html")),
+);
 
-// --- API FILES ---
+// --- API: CHAT AI (GROQ PROXY) ---
+// Ini adalah jembatan agar browser tidak kena blokir CORS
+app.post("/api/chat", async (req, res) => {
+  const { apiKey, messages } = req.body;
+
+  console.log("🤖 AI Request Received..."); // Log di terminal
+
+  if (!apiKey) {
+    console.log("❌ API Key Missing");
+    return res
+      .status(400)
+      .json({ error: "API Key Kosong! Masukkan di Settings." });
+  }
+
+  try {
+    const response = await axios.post(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        messages: messages,
+        model: "llama3-8b-8192", // Model Cepat & Gratis
+        temperature: 0.5,
+        max_tokens: 1024,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    console.log("✅ AI Response Success");
+    res.json(response.data);
+  } catch (error) {
+    const errMsg = error.response?.data?.error?.message || error.message;
+    console.error("🔥 AI Error:", errMsg);
+    res.status(500).json({ error: "Groq Error: " + errMsg });
+  }
+});
+
+// --- API FILE MANAGER ---
 app.post("/api/files", async (req, res) => {
   const { repoName } = req.body;
   try {
@@ -80,38 +121,12 @@ app.post("/api/save", async (req, res) => {
       { message: "Update via Hawai Editor", content: contentEncoded, sha },
       { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
-    await triggerCloudflareBuild(repoName);
+
+    // Trigger Build Background
+    triggerCloudflareBuild(repoName);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false });
-  }
-});
-
-// --- BARU: INTEGRASI GROQ SDK DI SERVER ---
-app.post("/api/chat", async (req, res) => {
-  const { apiKey, messages } = req.body;
-
-  if (!apiKey) return res.status(400).json({ error: "API Key Missing" });
-
-  try {
-    // Inisialisasi SDK dengan Key dari Client
-    const groq = new Groq({ apiKey: apiKey });
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: messages,
-      model: "llama3-8b-8192", // Model yang cepat dan stabil
-      temperature: 0.5,
-      max_tokens: 1024,
-      top_p: 1,
-      stream: false, // Kita matikan stream dulu biar gampang handle di frontend
-      stop: null,
-    });
-
-    // Kirim hasil balik ke frontend
-    res.json(chatCompletion);
-  } catch (error) {
-    console.error("Groq SDK Error:", error);
-    res.status(500).json({ error: error.message || "AI Error" });
   }
 });
 
@@ -123,7 +138,7 @@ async function triggerCloudflareBuild(projectName) {
       { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
     );
   } catch (e) {
-    console.log("Trigger build info:", e.message);
+    console.log("Build Trigger Info:", e.message);
   }
 }
 
@@ -212,7 +227,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       force: true,
     });
 
-    await delay(5000);
+    await delay(3000);
 
     try {
       await axios.post(
@@ -250,5 +265,4 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🔥 Hawai Server running on port ${PORT}`));

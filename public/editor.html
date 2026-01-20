@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hawai IDE | Llama 3</title>
+    <title>Hawai IDE | Pro</title>
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <link
@@ -29,7 +29,7 @@
         --sidebar-border: #1a1a20;
         --neon: #00f3ff;
         --neon-green: #00ff9d;
-        --neon-orange: #ff5f1f; /* Orange for Groq Theme */
+        --neon-orange: #ff5f1f;
         --text: #a0a0a0;
         --text-active: #ffffff;
         --hover-bg: rgba(0, 243, 255, 0.05);
@@ -108,7 +108,6 @@
         position: relative;
         overflow: hidden;
       }
-
       .editor-toolbar {
         height: 50px;
         background: #08080a;
@@ -126,7 +125,6 @@
         align-items: center;
         gap: 8px;
       }
-
       .toolbar-actions {
         display: flex;
         gap: 10px;
@@ -167,8 +165,6 @@
         color: var(--neon);
         border-color: var(--neon);
       }
-
-      /* AI BUTTON STYLE (Groq Orange) */
       .btn-ai {
         border-color: var(--neon-orange);
         color: var(--neon-orange);
@@ -211,7 +207,6 @@
         width: 50%;
         opacity: 1;
       }
-
       .preview-header {
         height: 35px;
         background: #f0f0f0;
@@ -247,11 +242,15 @@
         color: #555;
         flex-shrink: 0;
       }
+      .status-group {
+        display: flex;
+        gap: 15px;
+      }
       .status-val {
         color: var(--neon);
       }
 
-      /* --- AI PANEL STYLES --- */
+      /* AI PANEL */
       .ai-panel {
         position: absolute;
         right: 20px;
@@ -304,7 +303,6 @@
         border-radius: 4px;
         font-family: inherit;
       }
-
       .chat-bubble {
         padding: 10px 14px;
         border-radius: 6px;
@@ -338,7 +336,7 @@
         color: var(--neon-green);
       }
 
-      /* API KEY MODAL */
+      /* MODAL */
       .modal {
         position: fixed;
         inset: 0;
@@ -463,13 +461,12 @@
             line-height: 1.5;
           "
         >
-          We use <strong>Groq Cloud</strong> (Llama 3) for blazing fast, free AI
-          coding assistance.<br />
+          Masukkan API Key dari <strong>Groq Cloud</strong> (Gratis & Cepat).<br />
           <a
             href="https://console.groq.com/keys"
             target="_blank"
             style="color: var(--neon-orange); text-decoration: underline"
-            >👉 Get Free API Key Here</a
+            >👉 Get API Key Here</a
           >
         </p>
         <input
@@ -520,8 +517,8 @@
       <div class="ai-content" id="aiChatContent">
         <div class="chat-bubble chat-ai">
           <strong>System Online.</strong><br />
-          I'm using Llama 3 via Groq. Fast & Free.<br />
-          How can I help you code today?
+          Saya adalah AI Assistant (Llama 3).<br />
+          Kirim kode atau tanya error, saya akan bantu.
         </div>
       </div>
       <div class="ai-input-area">
@@ -624,14 +621,12 @@
     </div>
 
     <script>
-      /* --- GLOBAL VARIABLES --- */
       let editor;
       let currentSha = "";
       let currentPath = "";
       let isPreviewOpen = false;
       let debounceTimer = null;
       let GROQ_API_KEY = localStorage.getItem("HAWAI_GROQ_KEY") || "";
-
       const projectFiles = {};
 
       const params = new URLSearchParams(window.location.search);
@@ -643,13 +638,12 @@
         window.location.href = "/";
       }
 
-      /* --- INITIALIZE MONACO --- */
+      /* --- MONACO INIT --- */
       require.config({
         paths: {
           vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
         },
       });
-
       require(["vs/editor/editor.main"], function () {
         monaco.editor.defineTheme("hawai-dark", {
           base: "vs-dark",
@@ -693,7 +687,6 @@
           document.getElementById("cursorCol").innerText = e.position.column;
         });
 
-        // ACTION: AI FIX
         editor.addAction({
           id: "ask-ai-fix",
           label: "AI: Fix / Explain Code",
@@ -708,19 +701,10 @@
           },
         });
 
-        editor.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
-          saveFile,
-        );
-        editor.addCommand(
-          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP,
-          formatCode,
-        );
-
         loadFiles();
       });
 
-      /* --- AI LOGIC (VIA BACKEND PROXY) --- */
+      /* --- AI LOGIC (PANGGIL PROXY SERVER) --- */
       function toggleAI(forceOpen = false) {
         const panel = document.getElementById("aiPanel");
         const btn = document.getElementById("btnAiToggle");
@@ -735,7 +719,7 @@
           if (!GROQ_API_KEY) {
             appendChatMessage(
               "ai",
-              "⚠️ Masukkan Groq API Key dulu di Settings (Gratis).",
+              "⚠️ API Key belum disetting. Klik icon gear di sidebar.",
             );
             document.getElementById("settingsModal").style.display = "flex";
           }
@@ -749,7 +733,10 @@
           GROQ_API_KEY = key;
           document.getElementById("settingsModal").style.display = "none";
           showToast("API Key Saved!", "success");
-          appendChatMessage("ai", "✅ API Key tersimpan. Siap membantu!");
+          appendChatMessage(
+            "ai",
+            "✅ API Key tersimpan. Ada yang bisa dibantu?",
+          );
         } else {
           showToast("API Key tidak boleh kosong", "error");
         }
@@ -774,20 +761,20 @@
 
         const currentCode = editor.getValue();
         const context = `
-Kamu adalah AI Coding Assistant bernama Hawai Copilot.
-File saat ini: ${currentPath || "Untitled"}
+Role: Expert Web Developer.
+File: ${currentPath || "Untitled"}
+Language: ${document.getElementById("langDisplay").innerText}
 Code Context:
 \`\`\`
 ${currentCode.substring(0, 5000)}
 \`\`\`
 User Query: ${prompt}
-Berikan jawaban teknis, singkat, dan sertakan kode perbaikan jika perlu. Gunakan format Markdown.
         `;
 
         const loadingId = appendChatMessage("ai", "Thinking... ⚡");
 
         try {
-          // KIRIM KE SERVER KITA (Proxy ke Groq SDK)
+          // PANGGIL BACKEND PROXY (Agar tidak kena CORS/Error)
           const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -796,7 +783,7 @@ Berikan jawaban teknis, singkat, dan sertakan kode perbaikan jika perlu. Gunakan
               messages: [
                 {
                   role: "system",
-                  content: "You are an expert coding assistant.",
+                  content: "You are a helpful coding assistant.",
                 },
                 { role: "user", content: context },
               ],
@@ -808,18 +795,19 @@ Berikan jawaban teknis, singkat, dan sertakan kode perbaikan jika perlu. Gunakan
 
           if (data.choices && data.choices[0]) {
             appendChatMessage("ai", data.choices[0].message.content);
-          } else if (data.error) {
-            appendChatMessage("ai", `⚠️ Error dari Groq: ${data.error}`);
           } else {
-            appendChatMessage("ai", "⚠️ Tidak ada respon dari AI.");
+            appendChatMessage(
+              "ai",
+              "⚠️ Error: " + (data.error || "No response from AI"),
+            );
           }
         } catch (error) {
-          console.error(error);
           document.getElementById(loadingId).remove();
           appendChatMessage(
             "ai",
-            `❌ Server Connection Error. Pastikan server.js berjalan.`,
+            "❌ Connection Failed. Pastikan server.js berjalan.",
           );
+          console.error(error);
         }
       }
 
@@ -835,12 +823,11 @@ Berikan jawaban teknis, singkat, dan sertakan kode perbaikan jika perlu. Gunakan
         return div.id;
       }
 
-      /* --- PREVIEW LOGIC (SMART BUNDLER) --- */
+      /* --- PREVIEW LOGIC --- */
       function togglePreview() {
         const workspace = document.getElementById("workspace");
         const btn = document.getElementById("btnPreview");
         const status = document.getElementById("previewStatus");
-
         isPreviewOpen = !isPreviewOpen;
 
         if (isPreviewOpen) {
