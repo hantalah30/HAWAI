@@ -35,50 +35,6 @@ app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html")),
 );
 
-// --- API AI GRATIS (POLLINATIONS DENGAN SMART TRUNCATE) ---
-app.post("/api/chat", async (req, res) => {
-  const { messages } = req.body;
-  console.log("🤖 AI Request received...");
-
-  try {
-    // Ambil pesan terakhir user
-    const userMsg =
-      messages.reverse().find((m) => m.role === "user")?.content || "";
-
-    // Ambil konteks sistem (instruksi)
-    const systemMsg = messages.find((m) => m.role === "system")?.content || "";
-
-    // Gabungkan. PENTING: Kita potong (slice) agar tidak melebihi batas URL GET request (sekitar 2000 karakter)
-    // Kita prioritaskan pesan user, baru konteks kodingan.
-    let fullText = `${systemMsg}\n\nUser: ${userMsg}`;
-
-    // Batasi panjang karakter agar tidak error di server AI gratisan
-    if (fullText.length > 1800) {
-      fullText = fullText.slice(0, 1800) + "\n...(code truncated)...";
-    }
-
-    // Encode URL
-    const encodedPrompt = encodeURIComponent(fullText);
-
-    // Request ke Pollinations (Model OpenAI Compatible)
-    const url = `https://text.pollinations.ai/${encodedPrompt}?model=openai`;
-
-    const response = await axios.get(url);
-
-    // Cek apakah respon valid
-    if (!response.data) throw new Error("Empty response from AI");
-
-    console.log("✅ AI Responded");
-    res.json({ reply: response.data });
-  } catch (error) {
-    console.error("🔥 AI Error:", error.message);
-    res.status(500).json({
-      error:
-        "AI sedang sibuk atau pesan terlalu panjang. Coba persingkat kode.",
-    });
-  }
-});
-
 // --- API FILE MANAGER ---
 app.post("/api/files", async (req, res) => {
   const { repoName } = req.body;

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hawai IDE | Auto AI</title>
+    <title>Hawai IDE | Pro</title>
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <link
@@ -20,7 +20,6 @@
     <script src="https://unpkg.com/prettier@2.8.8/parser-postcss.js"></script>
     <script src="https://unpkg.com/prettier@2.8.8/parser-babel.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
       :root {
@@ -29,7 +28,6 @@
         --sidebar-border: #1a1a20;
         --neon: #00f3ff;
         --neon-green: #00ff9d;
-        --neon-pink: #ff00ff;
         --text: #a0a0a0;
         --text-active: #ffffff;
         --hover-bg: rgba(0, 243, 255, 0.05);
@@ -67,9 +65,6 @@
         color: var(--neon);
         letter-spacing: 1px;
         border-bottom: 1px solid var(--sidebar-border);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
       }
       .file-list {
         flex: 1;
@@ -108,6 +103,7 @@
         position: relative;
         overflow: hidden;
       }
+
       .editor-toolbar {
         height: 50px;
         background: #08080a;
@@ -125,15 +121,18 @@
         align-items: center;
         gap: 8px;
       }
+
       .toolbar-actions {
         display: flex;
-        gap: 10px;
+        gap: 8px;
       }
+
+      /* BUTTONS */
       .btn {
         background: transparent;
         border: 1px solid #333;
         color: var(--text);
-        padding: 6px 14px;
+        padding: 6px 12px;
         font-family: "Rajdhani";
         font-size: 0.85rem;
         font-weight: 600;
@@ -150,6 +149,14 @@
         color: var(--neon);
         background: rgba(0, 243, 255, 0.05);
       }
+      .btn.active {
+        background: rgba(0, 243, 255, 0.2);
+        color: var(--neon);
+        border-color: var(--neon);
+      }
+      .btn-icon-only {
+        padding: 6px 8px;
+      }
       .btn-primary {
         background: var(--neon);
         color: #000;
@@ -159,23 +166,6 @@
         background: #00c4cf;
         box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
         color: black;
-      }
-      .btn.active {
-        background: rgba(0, 243, 255, 0.2);
-        color: var(--neon);
-        border-color: var(--neon);
-      }
-
-      /* AI BUTTON */
-      .btn-ai {
-        border-color: var(--neon-pink);
-        color: var(--neon-pink);
-      }
-      .btn-ai:hover,
-      .btn-ai.active {
-        background: var(--neon-pink);
-        color: black;
-        box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
       }
 
       /* SPLIT VIEW */
@@ -209,6 +199,7 @@
         width: 50%;
         opacity: 1;
       }
+
       .preview-header {
         height: 35px;
         background: #f0f0f0;
@@ -252,92 +243,6 @@
         color: var(--neon);
       }
 
-      /* AI PANEL */
-      .ai-panel {
-        position: absolute;
-        right: 20px;
-        bottom: 80px;
-        width: 380px;
-        height: 550px;
-        background: rgba(10, 15, 20, 0.98);
-        backdrop-filter: blur(10px);
-        border: 1px solid var(--neon-pink);
-        border-radius: 8px;
-        display: none;
-        flex-direction: column;
-        z-index: 1000;
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
-        overflow: hidden;
-      }
-      .ai-header {
-        padding: 12px 15px;
-        background: rgba(255, 0, 255, 0.1);
-        border-bottom: 1px solid var(--neon-pink);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: var(--neon-pink);
-        font-weight: bold;
-        font-family: "Rajdhani";
-      }
-      .ai-content {
-        flex: 1;
-        padding: 15px;
-        overflow-y: auto;
-        font-size: 0.85rem;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .ai-input-area {
-        padding: 10px;
-        border-top: 1px solid #333;
-        display: flex;
-        gap: 10px;
-        background: #080808;
-      }
-      .ai-input {
-        flex: 1;
-        background: #111;
-        border: 1px solid #333;
-        color: white;
-        padding: 10px;
-        border-radius: 4px;
-        font-family: inherit;
-      }
-      .chat-bubble {
-        padding: 10px 14px;
-        border-radius: 6px;
-        max-width: 90%;
-        word-wrap: break-word;
-        line-height: 1.5;
-      }
-      .chat-user {
-        align-self: flex-end;
-        background: #222;
-        border: 1px solid #444;
-        color: #ccc;
-      }
-      .chat-ai {
-        align-self: flex-start;
-        background: rgba(255, 0, 255, 0.05);
-        border: 1px solid var(--neon-pink);
-        color: #ddd;
-      }
-      .chat-ai pre {
-        background: #000;
-        padding: 8px;
-        border-radius: 4px;
-        overflow-x: auto;
-        margin: 8px 0;
-        border: 1px solid #333;
-      }
-      .chat-ai code {
-        font-family: "JetBrains Mono";
-        font-size: 0.85em;
-        color: var(--neon-green);
-      }
-
       /* TOAST & LOADER */
       .toast-container {
         position: fixed;
@@ -363,6 +268,9 @@
       }
       .toast.error {
         border-left-color: #ff3333;
+      }
+      .toast.info {
+        border-left-color: var(--neon);
       }
       @keyframes slideIn {
         from {
@@ -414,41 +322,7 @@
           letter-spacing: 2px;
         "
       >
-        INITIALIZING HAWAI PRO...
-      </div>
-    </div>
-
-    <div class="ai-panel" id="aiPanel">
-      <div class="ai-header">
-        <span><i class="ri-robot-2-line"></i> SMART ASSISTANT</span>
-        <i
-          class="ri-close-line"
-          style="cursor: pointer"
-          onclick="toggleAI()"
-        ></i>
-      </div>
-      <div class="ai-content" id="aiChatContent">
-        <div class="chat-bubble chat-ai">
-          <strong>System Online (Free Mode).</strong><br />
-          Saya siap membantu memperbaiki kode HTML, CSS, atau JS Anda. Tidak
-          perlu API Key.<br />
-          <em
-            >Catatan: Kode yang terlalu panjang akan dipotong agar muat di
-            server gratisan.</em
-          >
-        </div>
-      </div>
-      <div class="ai-input-area">
-        <input
-          type="text"
-          id="aiInput"
-          class="ai-input"
-          placeholder="Tanya sesuatu atau minta perbaikan..."
-          onkeypress="handleAiInput(event)"
-        />
-        <button class="btn btn-ai" onclick="sendAiMessage()">
-          <i class="ri-send-plane-fill"></i>
-        </button>
+        LOADING WORKSPACE...
       </div>
     </div>
 
@@ -456,7 +330,7 @@
 
     <div class="sidebar">
       <div class="sidebar-header">
-        <span><i class="ri-code-s-slash-line"></i> PRO IDE</span>
+        <span><i class="ri-code-s-slash-line"></i> HAWAI IDE</span>
       </div>
       <div class="file-list" id="fileList"></div>
       <div class="sidebar-footer">
@@ -473,17 +347,50 @@
           <span id="currentFileName">No File Selected</span>
         </div>
         <div class="toolbar-actions">
-          <button class="btn btn-ai" id="btnAiToggle" onclick="toggleAI()">
-            <i class="ri-magic-line"></i> AI HELP
+          <button
+            class="btn btn-icon-only"
+            onclick="toggleWrap()"
+            title="Toggle Word Wrap"
+          >
+            <i class="ri-text-wrap"></i>
           </button>
-          <button class="btn" id="btnPreview" onclick="togglePreview()">
-            <i class="ri-layout-column-line"></i> LIVE PREVIEW
+          <button
+            class="btn btn-icon-only"
+            onclick="toggleMinimap()"
+            title="Toggle Minimap"
+          >
+            <i class="ri-map-2-line"></i>
+          </button>
+          <button
+            class="btn btn-icon-only"
+            onclick="changeFontSize(1)"
+            title="Zoom In"
+          >
+            <i class="ri-zoom-in-line"></i>
+          </button>
+          <button
+            class="btn btn-icon-only"
+            onclick="changeFontSize(-1)"
+            title="Zoom Out"
+          >
+            <i class="ri-zoom-out-line"></i>
+          </button>
+
+          <div
+            style="width: 1px; background: #333; height: 20px; margin: 0 5px"
+          ></div>
+
+          <button class="btn" onclick="downloadFile()" title="Download File">
+            <i class="ri-download-cloud-line"></i>
           </button>
           <button class="btn" onclick="formatCode()">
             <i class="ri-brush-line"></i> FORMAT
           </button>
+          <button class="btn" id="btnPreview" onclick="togglePreview()">
+            <i class="ri-layout-column-line"></i> LIVE PREVIEW
+          </button>
           <button class="btn btn-primary" onclick="saveFile()">
-            <i class="ri-save-3-fill"></i> SAVE & DEPLOY
+            <i class="ri-save-3-fill"></i> SAVE
           </button>
         </div>
       </div>
@@ -493,7 +400,7 @@
         <div id="preview-container">
           <div class="preview-header">
             <span style="display: flex; align-items: center; gap: 5px"
-              ><i class="ri-eye-line"></i> SIMULATOR</span
+              ><i class="ri-eye-line"></i> WEB SIMULATOR (HTML+CSS+JS)</span
             >
             <button
               class="btn"
@@ -510,7 +417,7 @@
           </div>
           <iframe
             id="previewFrame"
-            sandbox="allow-scripts allow-same-origin allow-modals allow-forms"
+            sandbox="allow-scripts allow-modals allow-forms allow-same-origin"
           ></iframe>
         </div>
       </div>
@@ -530,22 +437,28 @@
     </div>
 
     <script>
+      /* --- 1. GLOBAL VARIABLES --- */
       let editor;
       let currentSha = "";
       let currentPath = "";
       let isPreviewOpen = false;
       let debounceTimer = null;
+      let fontSize = 14;
+      let wordWrap = "off";
+      let minimapEnabled = false;
+
+      // PROJECT CACHE: Menyimpan { 'index.html': {content: '...'}, 'style.css': {content: '...'} }
       const projectFiles = {};
 
       const params = new URLSearchParams(window.location.search);
       const repoName = params.get("repo");
-      const liveUrl = params.get("url");
 
       if (!repoName) {
         alert("Repo not found");
         window.location.href = "/";
       }
 
+      /* --- 2. MONACO INIT --- */
       require.config({
         paths: {
           vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
@@ -568,24 +481,26 @@
         editor = monaco.editor.create(
           document.getElementById("monaco-container"),
           {
-            value: "// Select a file to edit...",
+            value: "// Loading...",
             language: "javascript",
             theme: "hawai-dark",
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 14,
-            minimap: { enabled: false },
+            fontSize: fontSize,
+            minimap: { enabled: minimapEnabled },
+            wordWrap: wordWrap,
             automaticLayout: true,
             padding: { top: 20 },
             lineNumbersMinChars: 3,
           },
         );
 
+        // Event: Update Cache & Preview saat mengetik
         editor.onDidChangeModelContent(() => {
           if (currentPath && projectFiles[currentPath]) {
             projectFiles[currentPath].content = editor.getValue();
             if (isPreviewOpen) {
               clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(updatePreviewContent, 300);
+              debounceTimer = setTimeout(updatePreviewContent, 800); // Debounce untuk mencegah lag
             }
           }
         });
@@ -593,21 +508,6 @@
         editor.onDidChangeCursorPosition((e) => {
           document.getElementById("cursorLn").innerText = e.position.lineNumber;
           document.getElementById("cursorCol").innerText = e.position.column;
-        });
-
-        // AI SHORTCUT: Klik Kanan
-        editor.addAction({
-          id: "ask-ai-fix",
-          label: "AI: Fix Code",
-          contextMenuGroupId: "navigation",
-          run: function (ed) {
-            toggleAI(true);
-            const selection = ed.getModel().getValueInRange(ed.getSelection());
-            const msg = selection
-              ? `Fix this:\n${selection}`
-              : "Check this file for errors.";
-            document.getElementById("aiInput").value = msg;
-          },
         });
 
         editor.addCommand(
@@ -622,98 +522,80 @@
         loadFiles();
       });
 
-      /* --- AI LOGIC (POLLINATIONS BACKEND) --- */
-      function toggleAI(forceOpen = false) {
-        const panel = document.getElementById("aiPanel");
-        const btn = document.getElementById("btnAiToggle");
+      /* --- 3. CORE PREVIEW LOGIC (DEEP INJECTION) --- */
+      // Fungsi ini menggabungkan semua file menjadi satu string HTML
+      function updatePreviewContent() {
+        const frame = document.getElementById("previewFrame");
 
-        if (panel.style.display === "flex" && !forceOpen) {
-          panel.style.display = "none";
-          btn.classList.remove("active");
+        // 1. Cari File HTML Utama
+        let htmlFile = null;
+        if (currentPath && currentPath.endsWith(".html")) {
+          htmlFile = projectFiles[currentPath];
         } else {
-          panel.style.display = "flex";
-          btn.classList.add("active");
-          document.getElementById("aiInput").focus();
+          const allFiles = Object.values(projectFiles);
+          htmlFile =
+            allFiles.find((f) => f.name === "index.html") ||
+            allFiles.find((f) => f.name.endsWith(".html"));
         }
-      }
 
-      function handleAiInput(e) {
-        if (e.key === "Enter") sendAiMessage();
-      }
+        if (!htmlFile) {
+          frame.srcdoc = `<body style="color:#666; font-family:sans-serif; padding:20px;"><h3>No HTML File Found</h3><p>Create or open an HTML file to start preview.</p></body>`;
+          return;
+        }
 
-      async function sendAiMessage() {
-        const input = document.getElementById("aiInput");
-        const prompt = input.value.trim();
-        if (!prompt) return;
+        // 2. Parsing HTML String menjadi DOM Object
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlFile.content, "text/html");
 
-        appendChatMessage("user", prompt);
-        input.value = "";
-
-        const currentCode = editor.getValue();
-        const context = `
-Role: Web Developer Expert.
-Code (Snippet):
-\`\`\`
-${currentCode.substring(0, 1500)}
-\`\`\`
-Question: ${prompt}
-        `;
-
-        const loadingId = appendChatMessage("ai", "Thinking... 🔮");
-
-        try {
-          // PANGGIL PROXY DI SERVER.JS (No Key Needed)
-          const response = await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              messages: [
-                { role: "system", content: "You are a coding assistant." },
-                { role: "user", content: context },
-              ],
-            }),
-          });
-
-          if (!response.ok) throw new Error("Server Error");
-
-          const data = await response.json();
-          document.getElementById(loadingId).remove();
-
-          if (data.choices && data.choices[0]) {
-            appendChatMessage("ai", data.choices[0].message.content);
-          } else {
-            appendChatMessage(
-              "ai",
-              "⚠️ AI tidak merespon (Mungkin server sedang sibuk).",
+        // 3. CSS BUNDLER (Cari <link> dan ganti dengan <style>)
+        const links = doc.querySelectorAll('link[rel="stylesheet"]');
+        links.forEach((link) => {
+          const href = link.getAttribute("href");
+          if (href) {
+            const fileName = href.split("/").pop(); // Ambil 'style.css' dari './style.css'
+            // Cari file di cache yang namanya cocok
+            const cssFile = Object.values(projectFiles).find(
+              (f) => f.name === fileName,
             );
+
+            if (cssFile) {
+              const style = doc.createElement("style");
+              style.innerHTML = `/* Injected: ${fileName} */\n${cssFile.content}`;
+              link.replaceWith(style); // Ganti tag <link> dengan <style>
+            }
           }
-        } catch (error) {
-          document.getElementById(loadingId).remove();
-          appendChatMessage(
-            "ai",
-            "❌ Gagal terhubung ke Server AI. Pastikan server.js berjalan.",
-          );
-          console.error(error);
-        }
+        });
+
+        // 4. JS BUNDLER (Cari <script src> dan ganti dengan inline <script>)
+        const scripts = doc.querySelectorAll("script[src]");
+        scripts.forEach((script) => {
+          const src = script.getAttribute("src");
+          if (src) {
+            const fileName = src.split("/").pop();
+            const jsFile = Object.values(projectFiles).find(
+              (f) => f.name === fileName,
+            );
+
+            if (jsFile) {
+              const newScript = doc.createElement("script");
+              // Tambahkan try-catch agar error di JS user tidak mematikan iframe
+              newScript.innerHTML = `/* Injected: ${fileName} */\nconsole.log('Loading ${fileName}...');\ntry {\n${jsFile.content}\n} catch(err) { console.error('Error in ${fileName}:', err); }`;
+              script.replaceWith(newScript); // Ganti tag script external dengan inline
+            }
+          }
+        });
+
+        // 5. Render ke Iframe
+        // Kita gunakan XMLSerializer untuk mengubah DOM kembali menjadi String HTML
+        const finalHtml = new XMLSerializer().serializeToString(doc);
+        frame.srcdoc = finalHtml;
       }
 
-      function appendChatMessage(role, text) {
-        const container = document.getElementById("aiChatContent");
-        const div = document.createElement("div");
-        div.className = `chat-bubble chat-${role}`;
-        div.id = `msg-${Date.now()}`;
-        if (role === "ai") div.innerHTML = marked.parse(text);
-        else div.innerText = text;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
-        return div.id;
-      }
-
-      /* --- PREVIEW LOGIC --- */
       function togglePreview() {
         const workspace = document.getElementById("workspace");
         const btn = document.getElementById("btnPreview");
         const status = document.getElementById("previewStatus");
+
         isPreviewOpen = !isPreviewOpen;
 
         if (isPreviewOpen) {
@@ -737,69 +619,7 @@ Question: ${prompt}
         updatePreviewContent();
       }
 
-      function updatePreviewContent() {
-        const frame = document.getElementById("previewFrame");
-        let htmlFile = null;
-        if (currentPath && currentPath.endsWith(".html"))
-          htmlFile = projectFiles[currentPath];
-        else
-          htmlFile =
-            Object.values(projectFiles).find((f) => f.name === "index.html") ||
-            Object.values(projectFiles).find((f) => f.name.endsWith(".html"));
-
-        if (!htmlFile) {
-          frame.srcdoc = `<body style="color:#555; padding:20px; font-family:sans-serif;"><h3>Waiting for HTML...</h3></body>`;
-          return;
-        }
-
-        let finalHTML = htmlFile.content;
-        if (liveUrl && !finalHTML.includes("<base"))
-          finalHTML = finalHTML.replace(
-            "<head>",
-            `<head><base href="${liveUrl}/">`,
-          );
-
-        const cssFiles = Object.values(projectFiles).filter((f) =>
-          f.name.endsWith(".css"),
-        );
-        cssFiles.forEach((css) => {
-          const safeName = css.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          const regex = new RegExp(
-            `<link[^>]+href=["']\\.?\\/?${safeName}["'][^>]*>`,
-            "gi",
-          );
-          if (finalHTML.match(regex))
-            finalHTML = finalHTML.replace(
-              regex,
-              `<style data-source="${css.name}">\n${css.content}\n</style>`,
-            );
-          else
-            finalHTML = finalHTML.replace(
-              "</head>",
-              `<style data-source="${css.name}">\n${css.content}\n</style></head>`,
-            );
-        });
-
-        const jsFiles = Object.values(projectFiles).filter((f) =>
-          f.name.endsWith(".js"),
-        );
-        jsFiles.forEach((js) => {
-          const safeName = js.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          const regex = new RegExp(
-            `<script[^>]+src=["']\\.?\\/?${safeName}["'][^>]*>\\s*<\\/script>`,
-            "gi",
-          );
-          if (finalHTML.match(regex))
-            finalHTML = finalHTML.replace(
-              regex,
-              `<script data-source="${js.name}">\n${js.content}\n<\/script>`,
-            );
-        });
-
-        frame.srcdoc = finalHTML;
-      }
-
-      /* --- FILE SYSTEM --- */
+      /* --- 4. FILE SYSTEM LOGIC --- */
       async function loadFiles() {
         try {
           const res = await fetch("/api/files", {
@@ -813,6 +633,8 @@ Question: ${prompt}
 
           if (data.success) {
             data.files.sort((a, b) => (a.name === "index.html" ? -1 : 1));
+
+            // PREFETCH ALL FILES
             const promises = data.files.map(async (file) => {
               const div = document.createElement("div");
               div.className = "file-item";
@@ -820,6 +642,7 @@ Question: ${prompt}
               if (file.name.endsWith(".html")) icon = "ri-html5-line";
               if (file.name.endsWith(".css")) icon = "ri-css3-line";
               if (file.name.endsWith(".js")) icon = "ri-javascript-line";
+
               div.innerHTML = `<i class="${icon}"></i> ${file.name}`;
               div.id = `file-${file.path.replace(/[^a-zA-Z0-9]/g, "-")}`;
               div.onclick = () => selectFile(file.path);
@@ -831,6 +654,8 @@ Question: ${prompt}
                 body: JSON.stringify({ repoName, filePath: file.path }),
               });
               const cData = await cRes.json();
+
+              // Masukkan ke Cache Global
               projectFiles[file.path] = {
                 name: file.name,
                 path: file.path,
@@ -841,6 +666,8 @@ Question: ${prompt}
 
             await Promise.all(promises);
             document.getElementById("global-loader").style.display = "none";
+
+            // Buka index.html default
             if (projectFiles["index.html"]) selectFile("index.html");
             else if (data.files.length > 0) selectFile(data.files[0].path);
           }
@@ -860,6 +687,7 @@ Question: ${prompt}
           `file-${path.replace(/[^a-zA-Z0-9]/g, "-")}`,
         );
         if (el) el.classList.add("active");
+
         currentPath = path;
         const file = projectFiles[path];
         document.getElementById("currentFileName").innerText = file.name;
@@ -868,11 +696,47 @@ Question: ${prompt}
         if (file.name.endsWith(".html")) lang = "html";
         if (file.name.endsWith(".css")) lang = "css";
         if (file.name.endsWith(".js")) lang = "javascript";
+
         document.getElementById("langDisplay").innerText = lang.toUpperCase();
         monaco.editor.setModelLanguage(editor.getModel(), lang);
         editor.setValue(file.content);
         currentSha = file.sha;
+
         if (isPreviewOpen) updatePreviewContent();
+      }
+
+      /* --- 5. UTILITY FUNCTIONS --- */
+      function toggleWrap() {
+        wordWrap = wordWrap === "off" ? "on" : "off";
+        editor.updateOptions({ wordWrap: wordWrap });
+        showToast(`Word Wrap: ${wordWrap.toUpperCase()}`, "info");
+      }
+
+      function toggleMinimap() {
+        minimapEnabled = !minimapEnabled;
+        editor.updateOptions({ minimap: { enabled: minimapEnabled } });
+        showToast(`Minimap: ${minimapEnabled ? "ON" : "OFF"}`, "info");
+      }
+
+      function changeFontSize(delta) {
+        if (fontSize + delta > 8) {
+          fontSize += delta;
+          editor.updateOptions({ fontSize: fontSize });
+        }
+      }
+
+      function downloadFile() {
+        if (!currentPath) return showToast("No file selected", "error");
+
+        const blob = new Blob([editor.getValue()], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = currentPath.split("/").pop();
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast("File Downloaded", "success");
       }
 
       function formatCode() {
@@ -880,6 +744,7 @@ Question: ${prompt}
         const code = editor.getValue();
         let parser = null,
           plugins = [];
+
         if (currentPath.endsWith(".html")) {
           parser = "html";
           plugins = prettierPlugins;
@@ -890,7 +755,9 @@ Question: ${prompt}
           parser = "babel";
           plugins = prettierPlugins;
         }
+
         if (!parser) return showToast("No formatter for this file.", "error");
+
         try {
           const formatted = prettier.format(code, {
             parser,
@@ -910,6 +777,7 @@ Question: ${prompt}
         if (!currentPath) return showToast("No file selected", "error");
         const content = editor.getValue();
         showToast("Saving...", "info");
+
         try {
           const res = await fetch("/api/save", {
             method: "POST",
@@ -922,6 +790,7 @@ Question: ${prompt}
             }),
           });
           const data = await res.json();
+
           if (data.success) {
             showToast("Saved & Triggered Deploy!", "success");
             fetch("/api/read", {
