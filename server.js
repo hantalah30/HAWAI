@@ -15,16 +15,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// HALAMAN DEPAN
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html")),
+);
 
-// KONFIGURASI PATH
 const TMP_DIR = os.tmpdir();
 const UPLOAD_DIR = path.join(TMP_DIR, "uploads");
 const EXTRACT_DIR = path.join(TMP_DIR, "temp");
-
 fs.ensureDirSync(UPLOAD_DIR);
 fs.ensureDirSync(EXTRACT_DIR);
 
@@ -36,7 +33,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-// --- API: AMBIL LIST FILE ---
+// --- API EDITOR ROUTES ---
 app.post("/api/files", async (req, res) => {
   const { repoName } = req.body;
   try {
@@ -52,11 +49,10 @@ app.post("/api/files", async (req, res) => {
       .map((f) => ({ name: f.name, path: f.path, sha: f.sha }));
     res.json({ success: true, files });
   } catch (error) {
-    res.status(500).json({ success: false, error: "Gagal mengambil file" });
+    res.status(500).json({ success: false });
   }
 });
 
-// --- API: BACA FILE ---
 app.post("/api/read", async (req, res) => {
   const { repoName, filePath } = req.body;
   try {
@@ -69,116 +65,103 @@ app.post("/api/read", async (req, res) => {
     );
     res.json({ success: true, content, sha: response.data.sha });
   } catch (error) {
-    res.status(500).json({ success: false, error: "Gagal membaca file" });
+    res.status(500).json({ success: false });
   }
 });
 
-// --- API: SAVE FILE ---
 app.post("/api/save", async (req, res) => {
   const { repoName, filePath, content, sha } = req.body;
   try {
     const contentEncoded = Buffer.from(content).toString("base64");
     await axios.put(
       `https://api.github.com/repos/${GITHUB_USER}/${repoName}/contents/${filePath}`,
-      {
-        message: "Update via Hawai Editor",
-        content: contentEncoded,
-        sha: sha,
-      },
+      { message: "Update via Hawai Editor", content: contentEncoded, sha },
       { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
+
+    // TRIGGER REBUILD ON SAVE
+    try {
+      await axios.post(
+        `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${repoName}/deployments`,
+        { branch: "main" },
+        { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
+      );
+    } catch (e) {
+      console.log(
+        "Auto-rebuild trigger failed (might need manual setup first)",
+      );
+    }
+
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ success: false, error: "Gagal menyimpan file" });
+    res.status(500).json({ success: false });
   }
 });
 
-// --- UTILITAS GIT ---
-const cleanGitTrash = (dir) => {
-  if (!fs.existsSync(dir)) return;
-  const files = fs.readdirSync(dir);
-  files.forEach((file) => {
-    const fullPath = path.join(dir, file);
-    const stat = fs.statSync(fullPath);
-    if (stat.isDirectory()) {
-      if (file === ".git" || file === "__MACOSX") fs.removeSync(fullPath);
-      else cleanGitTrash(fullPath);
-    } else {
-      if (file === ".gitmodules" || file === ".DS_Store")
-        fs.unlinkSync(fullPath);
-    }
-  });
-};
-
-async function findIndexDir(dir) {
-  const items = await fs.readdir(dir);
-  if (items.includes("index.html")) return dir;
-  for (const item of items) {
-    const fullPath = path.join(dir, item);
-    try {
-      const stat = await fs.stat(fullPath);
-      if (
-        stat.isDirectory() &&
-        ![".git", "__MACOSX", "node_modules"].includes(item)
-      ) {
-        const found = await findIndexDir(fullPath);
-        if (found) return found;
-      }
-    } catch (e) {
-      continue;
-    }
-  }
-  return null;
-}
-
-// --- ENDPOINT DEPLOY UTAMA ---
+// --- DEPLOY LOGIC UTAMA ---
 app.post("/deploy", upload.single("file"), async (req, res) => {
-  if (!req.file || !req.body.projectName) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Data tidak lengkap!" });
-  }
+  if (!req.file || !req.body.projectName)
+    return res.status(400).json({ success: false, error: "Missing data" });
 
-  // Ambil email user dari request (dikirim dari frontend Firebase)
   const userEmail = req.body.userEmail || "anonymous@hawai.id";
-
   const projectName = req.body.projectName
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "-");
-  const hawaiName = `hawai-${projectName}`;
+  const hawaiName = `hawai-${projectName}`; // Nama Repo & Project Cloudflare
   const zipPath = req.file.path;
   const extractPath = path.join(EXTRACT_DIR, hawaiName);
 
   try {
-    console.log(`🚀 Processing: ${hawaiName} by ${userEmail}`);
+    // 1. EXTRACT ZIP
     if (fs.existsSync(extractPath)) fs.removeSync(extractPath);
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(extractPath, true);
 
+    // 2. CLEANUP & NORMALIZE FOLDER
+    const cleanGitTrash = (dir) => {
+      if (!fs.existsSync(dir)) return;
+      fs.readdirSync(dir).forEach((file) => {
+        const fullPath = path.join(dir, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+          if (file === ".git" || file === "__MACOSX") fs.removeSync(fullPath);
+          else cleanGitTrash(fullPath);
+        } else {
+          if (file === ".gitmodules" || file === ".DS_Store")
+            fs.unlinkSync(fullPath);
+        }
+      });
+    };
     cleanGitTrash(extractPath);
-    const realRoot = await findIndexDir(extractPath);
-    if (!realRoot) throw new Error("index.html tidak ditemukan!");
 
-    if (realRoot !== extractPath) {
-      const files = await fs.readdir(realRoot);
-      for (const file of files) {
-        await fs.move(path.join(realRoot, file), path.join(extractPath, file), {
+    // Cek apakah user nge-zip folder (ada folder di dalam folder)
+    const items = fs.readdirSync(extractPath);
+    if (
+      items.length === 1 &&
+      fs.statSync(path.join(extractPath, items[0])).isDirectory()
+    ) {
+      const subDir = path.join(extractPath, items[0]);
+      const subItems = fs.readdirSync(subDir);
+      for (const item of subItems) {
+        fs.moveSync(path.join(subDir, item), path.join(extractPath, item), {
           overwrite: true,
         });
       }
+      fs.removeSync(subDir);
     }
 
+    // 3. CREATE GITHUB REPO (Jika belum ada)
     try {
       await axios.post(
         "https://api.github.com/user/repos",
         { name: hawaiName, private: false, auto_init: false },
         { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
-      await delay(1000);
+      console.log("✅ Repo Created:", hawaiName);
     } catch (e) {
-      console.log("Repo exists, pushing update...");
+      console.log("ℹ️ Repo Exists, Updating...");
     }
 
+    // 4. GIT PUSH
     await git.init({ fs, dir: extractPath, defaultBranch: "main" });
     const allFiles = fs.readdirSync(extractPath);
     for (const file of allFiles) {
@@ -186,12 +169,11 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         await git.add({ fs, dir: extractPath, filepath: file });
     }
 
-    // Commit dengan Author dari Firebase
     await git.commit({
       fs,
       dir: extractPath,
       author: { name: "Hawai Deployer", email: userEmail },
-      message: `Deploy by ${userEmail}`,
+      message: `Deploy by ${userEmail} at ${new Date().toISOString()}`,
     });
 
     await git.addRemote({
@@ -211,8 +193,13 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       force: true,
     });
 
-    // Cloudflare Trigger (Auto)
+    console.log("✅ Git Push Success");
+    await delay(3000); // Tunggu GitHub sync sebentar
+
+    // 5. CLOUDFLARE PAGES LOGIC (PERBAIKAN DI SINI)
     try {
+      // Coba Buat Project Baru
+      console.log("⚙️ Creating Cloudflare Project...");
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects`,
         {
@@ -227,13 +214,42 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
               deployments_enabled: true,
             },
           },
-          build_config: { build_command: "", destination_dir: "" },
+          build_config: { build_command: "", destination_dir: "" }, // Kosongkan untuk HTML statis
         },
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
-    } catch (e) {}
+
+      console.log("✅ Cloudflare Project Created");
+    } catch (e) {
+      // Jika Error Code 8000009 artinya "Project Name Already Taken" (Sudah ada)
+      // Maka kita trigger deployment baru (Rebuild)
+      if (
+        e.response &&
+        e.response.data &&
+        e.response.data.errors[0].code === 8000009
+      ) {
+        console.log("ℹ️ Project exists. Triggering Rebuild...");
+        try {
+          await axios.post(
+            `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${hawaiName}/deployments`,
+            { branch: "main" },
+            { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
+          );
+          console.log("✅ Rebuild Triggered");
+        } catch (deployErr) {
+          console.error(
+            "❌ Rebuild Failed:",
+            deployErr.response?.data || deployErr.message,
+          );
+        }
+      } else {
+        console.error("❌ Cloudflare Error:", e.response?.data || e.message);
+      }
+    }
 
     const liveUrl = `https://${hawaiName}.pages.dev`;
+
+    // Cleanup
     try {
       fs.removeSync(extractPath);
       fs.unlinkSync(zipPath);
@@ -241,7 +257,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
 
     res.json({ success: true, url: liveUrl, repo: hawaiName });
   } catch (error) {
-    console.error(error);
+    console.error("🔥 Critical Error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
