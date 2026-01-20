@@ -33,7 +33,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-// --- API EDITOR ROUTES ---
+// --- API EDITOR ROUTES (FILE MANAGER) ---
 app.post("/api/files", async (req, res) => {
   const { repoName } = req.body;
   try {
@@ -80,23 +80,28 @@ app.post("/api/save", async (req, res) => {
     );
 
     // TRIGGER REBUILD ON SAVE
-    try {
-      await axios.post(
-        `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${repoName}/deployments`,
-        { branch: "main" },
-        { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
-      );
-    } catch (e) {
-      console.log(
-        "Auto-rebuild trigger failed (might need manual setup first)",
-      );
-    }
-
+    await triggerCloudflareBuild(repoName);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false });
   }
 });
+
+// --- HELPER FUNCTION: TRIGGER BUILD ---
+// Fungsi ini memaksa Cloudflare untuk deploy ulang, memperbaiki masalah "No Git Connection"
+async function triggerCloudflareBuild(projectName) {
+  try {
+    console.log(`🔄 Triggering Cloudflare Build for: ${projectName}...`);
+    await axios.post(
+      `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${projectName}/deployments`,
+      { branch: "main" }, // Paksa ambil dari main
+      { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
+    );
+    console.log("✅ Build Triggered Successfully");
+  } catch (e) {
+    console.error("⚠️ Build Trigger Warning:", e.response?.data || e.message);
+  }
+}
 
 // --- DEPLOY LOGIC UTAMA ---
 app.post("/deploy", upload.single("file"), async (req, res) => {
@@ -107,17 +112,17 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
   const projectName = req.body.projectName
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "-");
-  const hawaiName = `hawai-${projectName}`; // Nama Repo & Project Cloudflare
+  const hawaiName = `hawai-${projectName}`;
   const zipPath = req.file.path;
   const extractPath = path.join(EXTRACT_DIR, hawaiName);
 
   try {
-    // 1. EXTRACT ZIP
+    // 1. BERSIHKAN & EXTRACT ZIP
     if (fs.existsSync(extractPath)) fs.removeSync(extractPath);
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(extractPath, true);
 
-    // 2. CLEANUP & NORMALIZE FOLDER
+    // 2. NORMALISASI STRUKTUR FOLDER
     const cleanGitTrash = (dir) => {
       if (!fs.existsSync(dir)) return;
       fs.readdirSync(dir).forEach((file) => {
@@ -133,7 +138,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
     };
     cleanGitTrash(extractPath);
 
-    // Cek apakah user nge-zip folder (ada folder di dalam folder)
+    // Cek jika zip berisi folder tunggal
     const items = fs.readdirSync(extractPath);
     if (
       items.length === 1 &&
@@ -149,7 +154,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       fs.removeSync(subDir);
     }
 
-    // 3. CREATE GITHUB REPO (Jika belum ada)
+    // 3. SETUP GITHUB REPO
     try {
       await axios.post(
         "https://api.github.com/user/repos",
@@ -161,7 +166,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       console.log("ℹ️ Repo Exists, Updating...");
     }
 
-    // 4. GIT PUSH
+    // 4. GIT PUSH OPERATION
     await git.init({ fs, dir: extractPath, defaultBranch: "main" });
     const allFiles = fs.readdirSync(extractPath);
     for (const file of allFiles) {
@@ -193,13 +198,17 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       force: true,
     });
 
-    console.log("✅ Git Push Success");
-    await delay(3000); // Tunggu GitHub sync sebentar
+    console.log("✅ Git Push Success. Waiting for GitHub Sync...");
 
-    // 5. CLOUDFLARE PAGES LOGIC (PERBAIKAN DI SINI)
+    // PENTING: Tunggu 5 detik agar GitHub memproses data sebelum Cloudflare mengaksesnya
+    await delay(5000);
+
+    // 5. CLOUDFLARE SETUP
+    let projectExists = false;
+
+    // Coba buat project baru
     try {
-      // Coba Buat Project Baru
-      console.log("⚙️ Creating Cloudflare Project...");
+      console.log("⚙️ Configuring Cloudflare Project...");
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects`,
         {
@@ -214,42 +223,29 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
               deployments_enabled: true,
             },
           },
-          build_config: { build_command: "", destination_dir: "" }, // Kosongkan untuk HTML statis
+          build_config: { build_command: "", destination_dir: "" },
         },
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
-
       console.log("✅ Cloudflare Project Created");
     } catch (e) {
-      // Jika Error Code 8000009 artinya "Project Name Already Taken" (Sudah ada)
-      // Maka kita trigger deployment baru (Rebuild)
       if (
         e.response &&
         e.response.data &&
         e.response.data.errors[0].code === 8000009
       ) {
-        console.log("ℹ️ Project exists. Triggering Rebuild...");
-        try {
-          await axios.post(
-            `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${hawaiName}/deployments`,
-            { branch: "main" },
-            { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
-          );
-          console.log("✅ Rebuild Triggered");
-        } catch (deployErr) {
-          console.error(
-            "❌ Rebuild Failed:",
-            deployErr.response?.data || deployErr.message,
-          );
-        }
+        console.log("ℹ️ Project exists.");
+        projectExists = true;
       } else {
         console.error("❌ Cloudflare Error:", e.response?.data || e.message);
       }
     }
 
-    const liveUrl = `https://${hawaiName}.pages.dev`;
+    // 6. FORCE BUILD TRIGGER (SOLUSI NO GIT CONNECTION)
+    // Apapun yang terjadi (baru dibuat atau sudah ada), kita PAKSA build sekarang.
+    await triggerCloudflareBuild(hawaiName);
 
-    // Cleanup
+    const liveUrl = `https://${hawaiName}.pages.dev`;
     try {
       fs.removeSync(extractPath);
       fs.unlinkSync(zipPath);
