@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hawai IDE | Pro</title>
+    <title>Hawai IDE | AI Free</title>
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <link
@@ -29,7 +29,7 @@
         --sidebar-border: #1a1a20;
         --neon: #00f3ff;
         --neon-green: #00ff9d;
-        --neon-orange: #ff5f1f;
+        --neon-pink: #ff00ff;
         --text: #a0a0a0;
         --text-active: #ffffff;
         --hover-bg: rgba(0, 243, 255, 0.05);
@@ -108,6 +108,7 @@
         position: relative;
         overflow: hidden;
       }
+
       .editor-toolbar {
         height: 50px;
         background: #08080a;
@@ -125,6 +126,7 @@
         align-items: center;
         gap: 8px;
       }
+
       .toolbar-actions {
         display: flex;
         gap: 10px;
@@ -165,15 +167,17 @@
         color: var(--neon);
         border-color: var(--neon);
       }
+
+      /* AI BUTTON */
       .btn-ai {
-        border-color: var(--neon-orange);
-        color: var(--neon-orange);
+        border-color: var(--neon-pink);
+        color: var(--neon-pink);
       }
       .btn-ai:hover,
       .btn-ai.active {
-        background: var(--neon-orange);
+        background: var(--neon-pink);
         color: black;
-        box-shadow: 0 0 15px rgba(255, 95, 31, 0.4);
+        box-shadow: 0 0 15px rgba(255, 0, 255, 0.4);
       }
 
       /* SPLIT VIEW */
@@ -207,6 +211,7 @@
         width: 50%;
         opacity: 1;
       }
+
       .preview-header {
         height: 35px;
         background: #f0f0f0;
@@ -242,10 +247,6 @@
         color: #555;
         flex-shrink: 0;
       }
-      .status-group {
-        display: flex;
-        gap: 15px;
-      }
       .status-val {
         color: var(--neon);
       }
@@ -259,7 +260,7 @@
         height: 550px;
         background: rgba(10, 15, 20, 0.98);
         backdrop-filter: blur(10px);
-        border: 1px solid var(--neon-orange);
+        border: 1px solid var(--neon-pink);
         border-radius: 8px;
         display: none;
         flex-direction: column;
@@ -269,12 +270,12 @@
       }
       .ai-header {
         padding: 12px 15px;
-        background: rgba(255, 95, 31, 0.1);
-        border-bottom: 1px solid var(--neon-orange);
+        background: rgba(255, 0, 255, 0.1);
+        border-bottom: 1px solid var(--neon-pink);
         display: flex;
         justify-content: space-between;
         align-items: center;
-        color: var(--neon-orange);
+        color: var(--neon-pink);
         font-weight: bold;
         font-family: "Rajdhani";
       }
@@ -303,6 +304,7 @@
         border-radius: 4px;
         font-family: inherit;
       }
+
       .chat-bubble {
         padding: 10px 14px;
         border-radius: 6px;
@@ -318,8 +320,8 @@
       }
       .chat-ai {
         align-self: flex-start;
-        background: rgba(255, 95, 31, 0.05);
-        border: 1px solid var(--neon-orange);
+        background: rgba(255, 0, 255, 0.05);
+        border: 1px solid var(--neon-pink);
         color: #ddd;
       }
       .chat-ai pre {
@@ -334,36 +336,6 @@
         font-family: "JetBrains Mono";
         font-size: 0.85em;
         color: var(--neon-green);
-      }
-
-      /* MODAL */
-      .modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.85);
-        z-index: 10001;
-        display: none;
-        justify-content: center;
-        align-items: center;
-      }
-      .modal-box {
-        background: #111;
-        border: 1px solid var(--neon-orange);
-        padding: 30px;
-        border-radius: 8px;
-        width: 450px;
-        text-align: center;
-        box-shadow: 0 0 30px rgba(255, 95, 31, 0.2);
-      }
-      .modal-input {
-        width: 100%;
-        padding: 12px;
-        background: #000;
-        border: 1px solid #333;
-        color: white;
-        margin: 15px 0;
-        font-family: inherit;
-        font-size: 1rem;
       }
 
       /* TOAST & LOADER */
@@ -446,68 +418,9 @@
       </div>
     </div>
 
-    <div class="modal" id="settingsModal">
-      <div class="modal-box">
-        <h3
-          style="color: var(--neon-orange); font-family: &quot;Rajdhani&quot;"
-        >
-          AI CONFIGURATION (GROQ)
-        </h3>
-        <p
-          style="
-            font-size: 0.85rem;
-            color: #888;
-            margin-top: 10px;
-            line-height: 1.5;
-          "
-        >
-          Masukkan API Key dari <strong>Groq Cloud</strong> (Gratis & Cepat).<br />
-          <a
-            href="https://console.groq.com/keys"
-            target="_blank"
-            style="color: var(--neon-orange); text-decoration: underline"
-            >👉 Get API Key Here</a
-          >
-        </p>
-        <input
-          type="password"
-          id="apiKeyInput"
-          class="modal-input"
-          placeholder="gsk_xxxxxxxxxxxxxxxxxxxx..."
-        />
-        <button
-          class="btn btn-primary"
-          style="
-            width: 100%;
-            justify-content: center;
-            background: var(--neon-orange);
-            color: black;
-            border: none;
-          "
-          onclick="saveApiKey()"
-        >
-          SAVE KEY
-        </button>
-        <button
-          class="btn"
-          style="
-            width: 100%;
-            justify-content: center;
-            margin-top: 10px;
-            border: none;
-          "
-          onclick="
-            document.getElementById('settingsModal').style.display = 'none'
-          "
-        >
-          CANCEL
-        </button>
-      </div>
-    </div>
-
     <div class="ai-panel" id="aiPanel">
       <div class="ai-header">
-        <span><i class="ri-flashlight-fill"></i> HAWAI CO-PILOT</span>
+        <span><i class="ri-brain-line"></i> FREE AI ASSISTANT</span>
         <i
           class="ri-close-line"
           style="cursor: pointer"
@@ -516,9 +429,9 @@
       </div>
       <div class="ai-content" id="aiChatContent">
         <div class="chat-bubble chat-ai">
-          <strong>System Online.</strong><br />
-          Saya adalah AI Assistant (Llama 3).<br />
-          Kirim kode atau tanya error, saya akan bantu.
+          <strong>Ready!</strong><br />
+          Saya AI Gratis (Powered by Pollinations). Tidak perlu API Key.<br />
+          Tanyakan apa saja tentang kodinganmu.
         </div>
       </div>
       <div class="ai-input-area">
@@ -540,14 +453,6 @@
     <div class="sidebar">
       <div class="sidebar-header">
         <span><i class="ri-code-s-slash-line"></i> PRO IDE</span>
-        <i
-          class="ri-settings-3-line"
-          style="cursor: pointer; font-size: 1rem; color: #666"
-          onclick="
-            document.getElementById('settingsModal').style.display = 'flex'
-          "
-          title="Settings"
-        ></i>
       </div>
       <div class="file-list" id="fileList"></div>
       <div class="sidebar-footer">
@@ -565,7 +470,7 @@
         </div>
         <div class="toolbar-actions">
           <button class="btn btn-ai" id="btnAiToggle" onclick="toggleAI()">
-            <i class="ri-flashlight-fill"></i> AI ASSIST
+            <i class="ri-magic-line"></i> AI HELP
           </button>
           <button class="btn" id="btnPreview" onclick="togglePreview()">
             <i class="ri-layout-column-line"></i> LIVE PREVIEW
@@ -584,7 +489,7 @@
         <div id="preview-container">
           <div class="preview-header">
             <span style="display: flex; align-items: center; gap: 5px"
-              ><i class="ri-eye-line"></i> WEB SIMULATOR (HTML+CSS+JS)</span
+              ><i class="ri-eye-line"></i> SIMULATOR</span
             >
             <button
               class="btn"
@@ -626,7 +531,6 @@
       let currentPath = "";
       let isPreviewOpen = false;
       let debounceTimer = null;
-      let GROQ_API_KEY = localStorage.getItem("HAWAI_GROQ_KEY") || "";
       const projectFiles = {};
 
       const params = new URLSearchParams(window.location.search);
@@ -644,6 +548,7 @@
           vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
         },
       });
+
       require(["vs/editor/editor.main"], function () {
         monaco.editor.defineTheme("hawai-dark", {
           base: "vs-dark",
@@ -687,24 +592,34 @@
           document.getElementById("cursorCol").innerText = e.position.column;
         });
 
+        // AI SHORTCUT
         editor.addAction({
           id: "ask-ai-fix",
-          label: "AI: Fix / Explain Code",
+          label: "AI: Fix Code",
           contextMenuGroupId: "navigation",
           run: function (ed) {
             toggleAI(true);
             const selection = ed.getModel().getValueInRange(ed.getSelection());
             const msg = selection
-              ? `Fix/Explain:\n${selection}`
-              : "Check for bugs in this code.";
+              ? `Fix this code:\n${selection}`
+              : "Check for bugs in this file.";
             document.getElementById("aiInput").value = msg;
           },
         });
 
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+          saveFile,
+        );
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP,
+          formatCode,
+        );
+
         loadFiles();
       });
 
-      /* --- AI LOGIC (PANGGIL PROXY SERVER) --- */
+      /* --- AI LOGIC (NO KEY NEEDED) --- */
       function toggleAI(forceOpen = false) {
         const panel = document.getElementById("aiPanel");
         const btn = document.getElementById("btnAiToggle");
@@ -716,29 +631,6 @@
           panel.style.display = "flex";
           btn.classList.add("active");
           document.getElementById("aiInput").focus();
-          if (!GROQ_API_KEY) {
-            appendChatMessage(
-              "ai",
-              "⚠️ API Key belum disetting. Klik icon gear di sidebar.",
-            );
-            document.getElementById("settingsModal").style.display = "flex";
-          }
-        }
-      }
-
-      function saveApiKey() {
-        const key = document.getElementById("apiKeyInput").value.trim();
-        if (key) {
-          localStorage.setItem("HAWAI_GROQ_KEY", key);
-          GROQ_API_KEY = key;
-          document.getElementById("settingsModal").style.display = "none";
-          showToast("API Key Saved!", "success");
-          appendChatMessage(
-            "ai",
-            "✅ API Key tersimpan. Ada yang bisa dibantu?",
-          );
-        } else {
-          showToast("API Key tidak boleh kosong", "error");
         }
       }
 
@@ -751,11 +643,6 @@
         const prompt = input.value.trim();
         if (!prompt) return;
 
-        if (!GROQ_API_KEY) {
-          document.getElementById("settingsModal").style.display = "flex";
-          return;
-        }
-
         appendChatMessage("user", prompt);
         input.value = "";
 
@@ -763,23 +650,22 @@
         const context = `
 Role: Expert Web Developer.
 File: ${currentPath || "Untitled"}
-Language: ${document.getElementById("langDisplay").innerText}
-Code Context:
+Code:
 \`\`\`
 ${currentCode.substring(0, 5000)}
 \`\`\`
-User Query: ${prompt}
+Question: ${prompt}
+Answer in Indonesian. Keep it short and helpful.
         `;
 
-        const loadingId = appendChatMessage("ai", "Thinking... ⚡");
+        const loadingId = appendChatMessage("ai", "Thinking... 🔮");
 
         try {
-          // PANGGIL BACKEND PROXY (Agar tidak kena CORS/Error)
+          // CALL SERVER PROXY (NO KEY REQUIRED)
           const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              apiKey: GROQ_API_KEY,
               messages: [
                 {
                   role: "system",
@@ -796,16 +682,13 @@ User Query: ${prompt}
           if (data.choices && data.choices[0]) {
             appendChatMessage("ai", data.choices[0].message.content);
           } else {
-            appendChatMessage(
-              "ai",
-              "⚠️ Error: " + (data.error || "No response from AI"),
-            );
+            appendChatMessage("ai", "⚠️ AI sedang sibuk, coba lagi nanti.");
           }
         } catch (error) {
           document.getElementById(loadingId).remove();
           appendChatMessage(
             "ai",
-            "❌ Connection Failed. Pastikan server.js berjalan.",
+            "❌ Connection Error. Pastikan server.js berjalan.",
           );
           console.error(error);
         }
@@ -828,6 +711,7 @@ User Query: ${prompt}
         const workspace = document.getElementById("workspace");
         const btn = document.getElementById("btnPreview");
         const status = document.getElementById("previewStatus");
+
         isPreviewOpen = !isPreviewOpen;
 
         if (isPreviewOpen) {

@@ -15,7 +15,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// --- KONFIGURASI ---
 const PORT = process.env.PORT || 3000;
 const GITHUB_USER = process.env.GITHUB_USER;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -36,43 +35,35 @@ app.get("/", (req, res) =>
   res.sendFile(path.join(__dirname, "public", "index.html")),
 );
 
-// --- API: CHAT AI (GROQ PROXY) ---
-// Ini adalah jembatan agar browser tidak kena blokir CORS
+// --- NEW: API AI GRATIS (POLLINATIONS) ---
+// Tidak perlu API Key, langsung tembak endpoint ini
 app.post("/api/chat", async (req, res) => {
-  const { apiKey, messages } = req.body;
-
-  console.log("🤖 AI Request Received..."); // Log di terminal
-
-  if (!apiKey) {
-    console.log("❌ API Key Missing");
-    return res
-      .status(400)
-      .json({ error: "API Key Kosong! Masukkan di Settings." });
-  }
+  const { messages } = req.body;
+  console.log("🤖 AI Request (Pollinations)...");
 
   try {
-    const response = await axios.post(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        messages: messages,
-        model: "llama3-8b-8192", // Model Cepat & Gratis
-        temperature: 0.5,
-        max_tokens: 1024,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      },
-    );
+    // Ambil pesan terakhir user dan konteks sistem
+    const systemMsg = messages.find((m) => m.role === "system")?.content || "";
+    const userMsg =
+      messages.reverse().find((m) => m.role === "user")?.content || "";
+
+    // Gabungkan prompt agar sesuai format Pollinations (Plain text prompt)
+    const finalPrompt = `${systemMsg}\n\nUser Question:\n${userMsg}`;
+
+    // Request ke Pollinations (Gratis, No-Key)
+    // Kita encodeURIComponent agar aman di URL
+    const url = `https://text.pollinations.ai/${encodeURIComponent(finalPrompt)}?model=openai`;
+
+    const response = await axios.get(url);
 
     console.log("✅ AI Response Success");
-    res.json(response.data);
+    // Format balik ke JSON agar frontend mudah baca
+    res.json({
+      choices: [{ message: { content: response.data } }],
+    });
   } catch (error) {
-    const errMsg = error.response?.data?.error?.message || error.message;
-    console.error("🔥 AI Error:", errMsg);
-    res.status(500).json({ error: "Groq Error: " + errMsg });
+    console.error("🔥 AI Error:", error.message);
+    res.status(500).json({ error: "AI Server Error: " + error.message });
   }
 });
 
@@ -121,8 +112,6 @@ app.post("/api/save", async (req, res) => {
       { message: "Update via Hawai Editor", content: contentEncoded, sha },
       { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
-
-    // Trigger Build Background
     triggerCloudflareBuild(repoName);
     res.json({ success: true });
   } catch (error) {
