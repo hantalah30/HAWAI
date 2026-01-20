@@ -33,7 +33,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-// --- API EDITOR ROUTES (FILE MANAGER) ---
+// --- API EDITOR ROUTES ---
 app.post("/api/files", async (req, res) => {
   const { repoName } = req.body;
   try {
@@ -78,8 +78,6 @@ app.post("/api/save", async (req, res) => {
       { message: "Update via Hawai Editor", content: contentEncoded, sha },
       { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
-
-    // TRIGGER REBUILD ON SAVE
     await triggerCloudflareBuild(repoName);
     res.json({ success: true });
   } catch (error) {
@@ -87,23 +85,51 @@ app.post("/api/save", async (req, res) => {
   }
 });
 
-// --- HELPER FUNCTION: TRIGGER BUILD ---
-// Fungsi ini memaksa Cloudflare untuk deploy ulang, memperbaiki masalah "No Git Connection"
+// --- NEW: AI PROXY ENDPOINT (Fixes CORS Issue) ---
+app.post("/api/chat", async (req, res) => {
+  const { apiKey, messages } = req.body;
+
+  if (!apiKey) return res.status(400).json({ error: "API Key Missing" });
+
+  try {
+    const response = await axios.post(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        messages: messages,
+        model: "llama3-8b-8192",
+        temperature: 0.5,
+        max_tokens: 1024,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("AI Error:", error.response?.data || error.message);
+    res.status(500).json({
+      error: error.response?.data?.error?.message || "Failed to contact AI",
+    });
+  }
+});
+
 async function triggerCloudflareBuild(projectName) {
   try {
-    console.log(`🔄 Triggering Cloudflare Build for: ${projectName}...`);
     await axios.post(
       `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${projectName}/deployments`,
-      { branch: "main" }, // Paksa ambil dari main
+      { branch: "main" },
       { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
     );
-    console.log("✅ Build Triggered Successfully");
   } catch (e) {
-    console.error("⚠️ Build Trigger Warning:", e.response?.data || e.message);
+    console.log("Trigger build info:", e.message);
   }
 }
 
-// --- DEPLOY LOGIC UTAMA ---
+// --- DEPLOY LOGIC ---
 app.post("/deploy", upload.single("file"), async (req, res) => {
   if (!req.file || !req.body.projectName)
     return res.status(400).json({ success: false, error: "Missing data" });
@@ -117,12 +143,10 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
   const extractPath = path.join(EXTRACT_DIR, hawaiName);
 
   try {
-    // 1. BERSIHKAN & EXTRACT ZIP
     if (fs.existsSync(extractPath)) fs.removeSync(extractPath);
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(extractPath, true);
 
-    // 2. NORMALISASI STRUKTUR FOLDER
     const cleanGitTrash = (dir) => {
       if (!fs.existsSync(dir)) return;
       fs.readdirSync(dir).forEach((file) => {
@@ -138,7 +162,6 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
     };
     cleanGitTrash(extractPath);
 
-    // Cek jika zip berisi folder tunggal
     const items = fs.readdirSync(extractPath);
     if (
       items.length === 1 &&
@@ -154,19 +177,14 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       fs.removeSync(subDir);
     }
 
-    // 3. SETUP GITHUB REPO
     try {
       await axios.post(
         "https://api.github.com/user/repos",
         { name: hawaiName, private: false, auto_init: false },
         { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
       );
-      console.log("✅ Repo Created:", hawaiName);
-    } catch (e) {
-      console.log("ℹ️ Repo Exists, Updating...");
-    }
+    } catch (e) {}
 
-    // 4. GIT PUSH OPERATION
     await git.init({ fs, dir: extractPath, defaultBranch: "main" });
     const allFiles = fs.readdirSync(extractPath);
     for (const file of allFiles) {
@@ -178,16 +196,14 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       fs,
       dir: extractPath,
       author: { name: "Hawai Deployer", email: userEmail },
-      message: `Deploy by ${userEmail} at ${new Date().toISOString()}`,
+      message: `Deploy by ${userEmail}`,
     });
-
     await git.addRemote({
       fs,
       dir: extractPath,
       remote: "origin",
       url: `https://github.com/${GITHUB_USER}/${hawaiName}.git`,
     });
-
     await git.push({
       fs,
       http,
@@ -198,17 +214,9 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       force: true,
     });
 
-    console.log("✅ Git Push Success. Waiting for GitHub Sync...");
-
-    // PENTING: Tunggu 5 detik agar GitHub memproses data sebelum Cloudflare mengaksesnya
     await delay(5000);
 
-    // 5. CLOUDFLARE SETUP
-    let projectExists = false;
-
-    // Coba buat project baru
     try {
-      console.log("⚙️ Configuring Cloudflare Project...");
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects`,
         {
@@ -227,22 +235,8 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
         },
         { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
       );
-      console.log("✅ Cloudflare Project Created");
-    } catch (e) {
-      if (
-        e.response &&
-        e.response.data &&
-        e.response.data.errors[0].code === 8000009
-      ) {
-        console.log("ℹ️ Project exists.");
-        projectExists = true;
-      } else {
-        console.error("❌ Cloudflare Error:", e.response?.data || e.message);
-      }
-    }
+    } catch (e) {}
 
-    // 6. FORCE BUILD TRIGGER (SOLUSI NO GIT CONNECTION)
-    // Apapun yang terjadi (baru dibuat atau sudah ada), kita PAKSA build sekarang.
     await triggerCloudflareBuild(hawaiName);
 
     const liveUrl = `https://${hawaiName}.pages.dev`;
