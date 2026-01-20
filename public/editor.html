@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hawai IDE | AI Free</title>
+    <title>Hawai IDE | Auto AI</title>
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <link
@@ -108,7 +108,6 @@
         position: relative;
         overflow: hidden;
       }
-
       .editor-toolbar {
         height: 50px;
         background: #08080a;
@@ -126,7 +125,6 @@
         align-items: center;
         gap: 8px;
       }
-
       .toolbar-actions {
         display: flex;
         gap: 10px;
@@ -211,7 +209,6 @@
         width: 50%;
         opacity: 1;
       }
-
       .preview-header {
         height: 35px;
         background: #f0f0f0;
@@ -246,6 +243,10 @@
         font-size: 0.75rem;
         color: #555;
         flex-shrink: 0;
+      }
+      .status-group {
+        display: flex;
+        gap: 15px;
       }
       .status-val {
         color: var(--neon);
@@ -304,7 +305,6 @@
         border-radius: 4px;
         font-family: inherit;
       }
-
       .chat-bubble {
         padding: 10px 14px;
         border-radius: 6px;
@@ -420,7 +420,7 @@
 
     <div class="ai-panel" id="aiPanel">
       <div class="ai-header">
-        <span><i class="ri-brain-line"></i> FREE AI ASSISTANT</span>
+        <span><i class="ri-robot-2-line"></i> SMART ASSISTANT</span>
         <i
           class="ri-close-line"
           style="cursor: pointer"
@@ -429,9 +429,13 @@
       </div>
       <div class="ai-content" id="aiChatContent">
         <div class="chat-bubble chat-ai">
-          <strong>Ready!</strong><br />
-          Saya AI Gratis (Powered by Pollinations). Tidak perlu API Key.<br />
-          Tanyakan apa saja tentang kodinganmu.
+          <strong>System Online (Free Mode).</strong><br />
+          Saya siap membantu memperbaiki kode HTML, CSS, atau JS Anda. Tidak
+          perlu API Key.<br />
+          <em
+            >Catatan: Kode yang terlalu panjang akan dipotong agar muat di
+            server gratisan.</em
+          >
         </div>
       </div>
       <div class="ai-input-area">
@@ -439,7 +443,7 @@
           type="text"
           id="aiInput"
           class="ai-input"
-          placeholder="Fix this code..."
+          placeholder="Tanya sesuatu atau minta perbaikan..."
           onkeypress="handleAiInput(event)"
         />
         <button class="btn btn-ai" onclick="sendAiMessage()">
@@ -542,7 +546,6 @@
         window.location.href = "/";
       }
 
-      /* --- MONACO INIT --- */
       require.config({
         paths: {
           vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
@@ -592,7 +595,7 @@
           document.getElementById("cursorCol").innerText = e.position.column;
         });
 
-        // AI SHORTCUT
+        // AI SHORTCUT: Klik Kanan
         editor.addAction({
           id: "ask-ai-fix",
           label: "AI: Fix Code",
@@ -601,8 +604,8 @@
             toggleAI(true);
             const selection = ed.getModel().getValueInRange(ed.getSelection());
             const msg = selection
-              ? `Fix this code:\n${selection}`
-              : "Check for bugs in this file.";
+              ? `Fix this:\n${selection}`
+              : "Check this file for errors.";
             document.getElementById("aiInput").value = msg;
           },
         });
@@ -619,7 +622,7 @@
         loadFiles();
       });
 
-      /* --- AI LOGIC (NO KEY NEEDED) --- */
+      /* --- AI LOGIC (POLLINATIONS BACKEND) --- */
       function toggleAI(forceOpen = false) {
         const panel = document.getElementById("aiPanel");
         const btn = document.getElementById("btnAiToggle");
@@ -648,33 +651,30 @@
 
         const currentCode = editor.getValue();
         const context = `
-Role: Expert Web Developer.
-File: ${currentPath || "Untitled"}
-Code:
+Role: Web Developer Expert.
+Code (Snippet):
 \`\`\`
-${currentCode.substring(0, 5000)}
+${currentCode.substring(0, 1500)}
 \`\`\`
 Question: ${prompt}
-Answer in Indonesian. Keep it short and helpful.
         `;
 
         const loadingId = appendChatMessage("ai", "Thinking... 🔮");
 
         try {
-          // CALL SERVER PROXY (NO KEY REQUIRED)
+          // PANGGIL PROXY DI SERVER.JS (No Key Needed)
           const response = await fetch("/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               messages: [
-                {
-                  role: "system",
-                  content: "You are a helpful coding assistant.",
-                },
+                { role: "system", content: "You are a coding assistant." },
                 { role: "user", content: context },
               ],
             }),
           });
+
+          if (!response.ok) throw new Error("Server Error");
 
           const data = await response.json();
           document.getElementById(loadingId).remove();
@@ -682,13 +682,16 @@ Answer in Indonesian. Keep it short and helpful.
           if (data.choices && data.choices[0]) {
             appendChatMessage("ai", data.choices[0].message.content);
           } else {
-            appendChatMessage("ai", "⚠️ AI sedang sibuk, coba lagi nanti.");
+            appendChatMessage(
+              "ai",
+              "⚠️ AI tidak merespon (Mungkin server sedang sibuk).",
+            );
           }
         } catch (error) {
           document.getElementById(loadingId).remove();
           appendChatMessage(
             "ai",
-            "❌ Connection Error. Pastikan server.js berjalan.",
+            "❌ Gagal terhubung ke Server AI. Pastikan server.js berjalan.",
           );
           console.error(error);
         }
@@ -711,7 +714,6 @@ Answer in Indonesian. Keep it short and helpful.
         const workspace = document.getElementById("workspace");
         const btn = document.getElementById("btnPreview");
         const status = document.getElementById("previewStatus");
-
         isPreviewOpen = !isPreviewOpen;
 
         if (isPreviewOpen) {
