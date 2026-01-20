@@ -579,7 +579,7 @@
       const statusLabel = document.getElementById("statusLabel");
 
       let progress = 0;
-      let speed = 0.5;
+      let speed = 0.1; // JAUH LEBIH LAMBAT (BIAR TERASA "DEPLOYING")
       let deployInterval;
 
       function updateStep(id, title, status) {
@@ -627,26 +627,22 @@
       }
 
       function finish() {
-        // 1. Ambil URL Parameters
         const params = new URLSearchParams(window.location.search);
         const targetUrl = params.get("url");
         const repoName = params.get("repo");
 
-        // 2. Update UI
         statusLabel.innerText = "DEPLOYMENT SUCCESSFUL";
         statusLabel.style.color = "var(--neon-green)";
         document.getElementById("mainTitle").innerText = "SYSTEM ONLINE";
         document.getElementById("mainTitle").style.color = "var(--neon-green)";
         sfx.playSuccess();
 
-        // 3. Setup Tombol Links
         const btnLive = document.getElementById("btnLive");
         const btnEdit = document.getElementById("btnEdit");
 
         if (targetUrl) btnLive.href = targetUrl;
         else btnLive.style.opacity = "0.5";
 
-        // Perbaikan: Link Editor menggunakan Repo Name dari parameter
         if (repoName && targetUrl) {
           btnEdit.href = `/editor.html?repo=${repoName}&url=${targetUrl}`;
         } else {
@@ -657,7 +653,6 @@
           };
         }
 
-        // 4. Tampilkan Menu
         document.getElementById("actionDeck").style.display = "grid";
       }
 
