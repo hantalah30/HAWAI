@@ -23,21 +23,7 @@
       property="og:image"
       content="https://hawai-seven.vercel.app/logo.png"
     />
-
     <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://hawai-seven.vercel.app/" />
-    <meta
-      property="twitter:title"
-      content="Hawai Hosting 🌴 | Sonic Identity"
-    />
-    <meta
-      property="twitter:description"
-      content="Infrastruktur hosting tingkat lanjut dengan arsitektur Edge Network."
-    />
-    <meta
-      property="twitter:image"
-      content="https://hawai-seven.vercel.app/logo.png"
-    />
 
     <link
       href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;600;700&family=Syncopate:wght@400;700&family=Outfit:wght@300;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap"
@@ -55,7 +41,7 @@
 
     <script>
       (function () {
-        // 1. DISABLE RIGHT CLICK & SHORTCUTS (Security Layer)
+        // Security Layer (Keep existing)
         document.addEventListener("contextmenu", (e) => e.preventDefault());
         document.addEventListener("keydown", function (e) {
           if (
@@ -66,16 +52,6 @@
             e.preventDefault();
           }
         });
-        // Debugger Trap (Keep existing logic)
-        setInterval(function () {
-          var startTime = performance.now();
-          // debugger; // Commented out for development comfort, uncomment for prod
-          var endTime = performance.now();
-          if (endTime - startTime > 100) {
-            document.body.innerHTML =
-              '<div style="color:red; background:black; height:100vh; display:flex; justify-content:center; align-items:center; font-family:monospace; font-size:2rem;">ACCESS DENIED // SYSTEM BREACH DETECTED</div>';
-          }
-        }, 100);
       })();
     </script>
 
@@ -113,129 +89,176 @@
         background-color: var(--void);
         color: white;
         font-family: "Outfit", sans-serif;
-        overflow: hidden; /* Lock scroll during boot */
+        overflow: hidden;
       }
       body.unlocked {
         overflow-x: hidden;
         overflow-y: auto;
       }
 
-      /* --- NEW BOOT SEQUENCE STYLES --- */
+      /* --- NEW VISUAL BOOT LOADER (No Text) --- */
       .boot-layer {
         position: fixed;
         inset: 0;
-        background: #000;
+        background: #020204;
         z-index: 99999;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        font-family: "JetBrains Mono";
-        overflow: hidden;
+        gap: 30px;
       }
 
-      /* CRT Effect */
-      .crt-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          rgba(18, 16, 16, 0) 50%,
-          rgba(0, 0, 0, 0.25) 50%
-        );
-        background-size: 100% 4px;
-        pointer-events: none;
-        z-index: 10;
-        animation: flicker 0.15s infinite;
+      /* Reactor Spinner */
+      .reactor-loader {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        perspective: 800px;
       }
-      @keyframes flicker {
+      .reactor-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 4px solid transparent;
+      }
+      .r1 {
+        border-top: 4px solid var(--neon-blue);
+        animation: spin 2s linear infinite;
+      }
+      .r2 {
+        border-right: 4px solid var(--neon-purple);
+        width: 80%;
+        height: 80%;
+        top: 10%;
+        left: 10%;
+        animation: spin-rev 1.5s linear infinite;
+      }
+      .r3 {
+        border-bottom: 4px solid var(--neon-green);
+        width: 60%;
+        height: 60%;
+        top: 20%;
+        left: 20%;
+        animation: spin 1s linear infinite;
+      }
+      .reactor-core {
+        position: absolute;
+        width: 40%;
+        height: 40%;
+        top: 30%;
+        left: 30%;
+        background: radial-gradient(circle, var(--neon-blue), transparent);
+        border-radius: 50%;
+        box-shadow: 0 0 20px var(--neon-blue);
+        animation: pulse 1s ease-in-out infinite alternate;
+      }
+
+      @keyframes spin {
         0% {
-          opacity: 0.9;
-        }
-        50% {
-          opacity: 0.95;
+          transform: rotate(0deg);
         }
         100% {
-          opacity: 0.9;
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes spin-rev {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(-360deg);
+        }
+      }
+      @keyframes pulse {
+        0% {
+          opacity: 0.5;
+          transform: scale(0.9);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1.1);
         }
       }
 
-      .terminal-window {
-        width: 80%;
-        max-width: 600px;
-        height: 300px;
-        position: relative;
-        z-index: 5;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: flex-start;
+      .boot-text {
+        font-family: "Syncopate";
+        font-weight: 700;
+        letter-spacing: 5px;
+        color: #555;
+        font-size: 0.9rem;
+        transition: color 0.3s;
       }
-
-      .log-container {
-        width: 100%;
-        color: var(--neon-green);
-        font-size: 0.8rem;
-        line-height: 1.5;
-        text-shadow: 0 0 5px var(--neon-green);
-        margin-bottom: 20px;
-        min-height: 150px;
-      }
-
-      .loading-bar-container {
-        width: 100%;
-        height: 2px;
-        background: #222;
-        margin-bottom: 20px;
-        position: relative;
-        overflow: hidden;
-      }
-      .loading-bar-fill {
-        height: 100%;
-        width: 0%;
-        background: var(--neon-blue);
-        box-shadow: 0 0 15px var(--neon-blue);
+      .boot-text.active {
+        color: white;
+        text-shadow: 0 0 10px white;
       }
 
       .engage-btn {
         opacity: 0;
-        background: transparent;
+        background: rgba(255, 255, 255, 0.05);
         border: 1px solid var(--neon-blue);
         color: var(--neon-blue);
-        padding: 15px 40px;
-        font-family: "Syncopate";
+        padding: 15px 50px;
+        font-family: "Rajdhani";
         font-weight: 700;
-        font-size: 1rem;
-        letter-spacing: 2px;
+        font-size: 1.2rem;
+        letter-spacing: 3px;
         cursor: pointer;
         position: relative;
         overflow: hidden;
         transition: 0.3s;
+        margin-top: 20px;
         transform: translateY(20px);
-        text-shadow: 0 0 10px var(--neon-blue);
-        box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
       }
       .engage-btn:hover {
         background: var(--neon-blue);
-        color: black;
-        box-shadow: 0 0 30px var(--neon-blue);
+        color: #000;
+        box-shadow: 0 0 40px rgba(0, 243, 255, 0.4);
       }
-      .engage-btn::before {
-        content: "";
+
+      /* --- NEW UPLOAD LOADER VISUAL --- */
+      .upload-overlay {
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.8),
-          transparent
-        );
-        transition: 0.5s;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.9);
+        display: none; /* Active via JS */
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        border-radius: 12px;
       }
-      .engage-btn:hover::before {
-        left: 100%;
+      .hex-spinner {
+        width: 60px;
+        height: 60px;
+        background: var(--neon-green);
+        clip-path: polygon(
+          50% 0%,
+          100% 25%,
+          100% 75%,
+          50% 100%,
+          0% 75%,
+          0% 25%
+        );
+        animation: spin-hex 1s infinite linear;
+        margin-bottom: 20px;
+      }
+      @keyframes spin-hex {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+      .upload-status {
+        font-family: "JetBrains Mono";
+        color: var(--neon-green);
+        font-size: 0.9rem;
+        letter-spacing: 1px;
       }
 
       /* Split Door Effect */
@@ -248,19 +271,20 @@
         background: #020204;
         z-index: 99990;
         transition: transform 1s cubic-bezier(0.8, 0, 0.2, 1);
+        border: none; /* Clean look */
       }
       .gate-top {
         top: 0;
         transform-origin: top;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid #111;
       }
       .gate-bottom {
         bottom: 0;
         transform-origin: bottom;
-        border-top: 1px solid #333;
+        border-top: 1px solid #111;
       }
 
-      /* --- AMBIENCE & CURSOR (Existing) --- */
+      /* --- AMBIENCE & CURSOR --- */
       .noise-layer {
         position: fixed;
         inset: 0;
@@ -303,7 +327,7 @@
         mix-blend-mode: screen;
       }
 
-      /* --- NAV & SECTIONS (Existing) --- */
+      /* --- NAV & SECTIONS --- */
       nav {
         position: fixed;
         top: 0;
@@ -314,7 +338,7 @@
         z-index: 100;
         background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
         pointer-events: none;
-        opacity: 0; /* Hidden initially */
+        opacity: 0;
       }
       .logo {
         font-family: "Syncopate";
@@ -502,19 +526,7 @@
         background: var(--neon-blue);
         clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
       }
-      .quantum-loader {
-        display: none;
-        width: 100%;
-        height: 4px;
-        background: #222;
-        margin-top: 20px;
-      }
-      .quantum-bar {
-        height: 100%;
-        width: 0%;
-        background: var(--neon-blue);
-        box-shadow: 0 0 20px var(--neon-blue);
-      }
+
       .success-terminal {
         display: none;
         margin-top: 20px;
@@ -694,16 +706,16 @@
   </head>
   <body>
     <div class="boot-layer" id="bootLayer">
-      <div class="crt-overlay"></div>
-      <div class="terminal-window">
-        <div class="log-container" id="bootLogs"></div>
-        <div class="loading-bar-container">
-          <div class="loading-bar-fill" id="bootBar"></div>
-        </div>
-        <button class="engage-btn hover-trigger" id="enterBtn">
-          INITIALIZE_SYSTEM <i class="ri-arrow-right-line"></i>
-        </button>
+      <div class="reactor-loader">
+        <div class="reactor-ring r1"></div>
+        <div class="reactor-ring r2"></div>
+        <div class="reactor-ring r3"></div>
+        <div class="reactor-core"></div>
       </div>
+      <div class="boot-text" id="bootText">INITIALIZING</div>
+      <button class="engage-btn hover-trigger" id="enterBtn">
+        SYSTEM READY // ENTER
+      </button>
     </div>
 
     <div class="gate-top" id="gateTop"></div>
@@ -789,6 +801,11 @@
             data-tilt-glare
             data-tilt-max-glare="0.1"
           >
+            <div class="upload-overlay" id="loadingOverlay">
+              <div class="hex-spinner"></div>
+              <div class="upload-status">UPLOADING ASSETS...</div>
+            </div>
+
             <div class="warning-box">
               <i class="ri-alert-fill warning-icon"></i>
               <div class="warning-text">
@@ -845,9 +862,6 @@
               </button>
             </form>
 
-            <div class="quantum-loader" id="loading">
-              <div class="quantum-bar" id="progressBar"></div>
-            </div>
             <div class="success-terminal" id="resultBox">
               <div style="font-size: 2rem; margin-bottom: 10px">✅</div>
               <div>DEPLOYMENT SUCCESSFUL</div>
@@ -937,7 +951,7 @@
     </section>
 
     <script>
-      /* --- AUDIO CONTEXT SETUP --- */
+      /* --- AUDIO SETUP --- */
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       let audioCtx;
       const SoundFX = {
@@ -998,108 +1012,79 @@
         },
       };
 
-      /* --- BOOT SEQUENCE LOGIC --- */
-      const bootLogs = [
-        "INITIALIZING BIOS...",
-        "CHECKING MEMORY: 32768 OK",
-        "LOADING KERNEL...",
-        "MOUNTING VOLUMES...",
-        "DECRYPTING SECURITY KEYS...",
-        "ESTABLISHING NEURAL LINK...",
-        "RENDERING VISUAL INTERFACE...",
-        "SYSTEM READY.",
-      ];
-
-      const logContainer = document.getElementById("bootLogs");
-      const bootBar = document.getElementById("bootBar");
+      /* --- NEW VISUAL BOOT SEQUENCE --- */
       const enterBtn = document.getElementById("enterBtn");
+      const bootText = document.getElementById("bootText");
 
-      let logIndex = 0;
-      function printLog() {
-        if (logIndex < bootLogs.length) {
-          const div = document.createElement("div");
-          div.textContent = `> ${bootLogs[logIndex]}`;
-          // Glitch effect on text insert
-          div.style.opacity = 0;
-          logContainer.appendChild(div);
-          gsap.to(div, { opacity: 1, duration: 0.1 });
+      // Simulasikan loading system tanpa text log yang panjang
+      setTimeout(() => {
+        bootText.innerText = "LOADING CORE MODULES...";
+        bootText.classList.add("active");
+      }, 500);
 
-          // Scroll bottom
-          logContainer.scrollTop = logContainer.scrollHeight;
+      setTimeout(() => {
+        bootText.innerText = "ESTABLISHING CONNECTION...";
+      }, 1500);
 
-          // Progress bar logic
-          const progress = ((logIndex + 1) / bootLogs.length) * 100;
-          bootBar.style.width = `${progress}%`;
+      setTimeout(() => {
+        bootText.style.display = "none";
+        gsap.to(enterBtn, {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "back.out",
+        });
+      }, 2500);
 
-          logIndex++;
-          setTimeout(printLog, Math.random() * 300 + 100);
-        } else {
-          // Sequence Done
-          gsap.to(enterBtn, {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            ease: "back.out",
-          });
-        }
-      }
-
-      // Start printing logs on load
-      setTimeout(printLog, 500);
-
-      // Handle Enter Click
       enterBtn.addEventListener("click", () => {
         audioCtx = new AudioContext();
         SoundFX.click();
         SoundFX.bootUp();
 
-        // Button Glitch Out
         gsap.to(enterBtn, { scale: 1.1, opacity: 0, duration: 0.2 });
+        gsap.to(".reactor-loader", { scale: 0, opacity: 0, duration: 0.5 });
 
-        // Hide terminal
-        gsap.to(".terminal-window", { opacity: 0, duration: 0.5, delay: 0.2 });
-
-        // Split Gate Animation
+        // Gate open
         gsap.to("#gateTop", {
           y: "-100%",
           duration: 1.5,
           ease: "power4.inOut",
-          delay: 0.5,
+          delay: 0.3,
         });
         gsap.to("#gateBottom", {
           y: "100%",
           duration: 1.5,
           ease: "power4.inOut",
-          delay: 0.5,
+          delay: 0.3,
         });
 
-        // Fade out overlay background
+        // Fade out boot layer
         gsap.to(".boot-layer", {
           opacity: 0,
           duration: 1,
-          delay: 1,
+          delay: 0.8,
           onComplete: () => {
             document.getElementById("bootLayer").style.display = "none";
-            document.body.classList.add("unlocked"); // Enable Scroll
+            document.body.classList.add("unlocked");
           },
         });
 
-        // Animate Site Elements In
-        gsap.to("nav", { opacity: 1, duration: 1, delay: 1.5 });
+        // Content In
+        gsap.to("nav", { opacity: 1, duration: 1, delay: 1.2 });
         gsap.from(".hero-content > *", {
           y: 50,
           opacity: 0,
           stagger: 0.1,
           duration: 1,
           ease: "power2.out",
-          delay: 1.6,
+          delay: 1.3,
         });
         gsap.from(".hud-glass", {
           x: 50,
           opacity: 0,
           duration: 1,
           ease: "power2.out",
-          delay: 1.8,
+          delay: 1.5,
         });
       });
 
@@ -1223,6 +1208,7 @@
         stagger: 0.2,
       });
 
+      /* --- UPLOAD LOGIC --- */
       const fileInput = document.getElementById("pFile"),
         dropArea = document.getElementById("dropArea"),
         form = document.getElementById("deployForm");
@@ -1234,70 +1220,48 @@
           document.getElementById("fileIcon").style.color = "var(--neon-green)";
           dropArea.style.borderColor = "var(--neon-green)";
           dropArea.style.background = "rgba(0, 255, 157, 0.05)";
-          SoundFX.hover(); // Using hover sound as success generic
+          SoundFX.hover();
         }
       });
-      // --- REVISI LOGIKA UPLOAD (REAL CONNECT KE SERVER) ---
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         SoundFX.click();
 
-        // 1. Tampilkan Loading UI
-        form.style.display = "none";
-        document.getElementById("loading").style.display = "block";
-        const bar = document.getElementById("progressBar");
+        // New Upload UI
+        // form.style.display = "none"; // Hide form
+        document.getElementById("loadingOverlay").style.display = "flex"; // Show Overlay
 
-        // Animasi loading fake sambil nunggu upload ke Vercel selesai
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += Math.random() * 5;
-          if (progress > 90) progress = 90; // Mentok di 90% sampai respon server datang
-          bar.style.width = progress + "%";
-        }, 200);
-
-        // 2. Siapkan Data
         const formData = new FormData();
         formData.append("projectName", document.getElementById("pName").value);
         formData.append("file", fileInput.files[0]);
 
         try {
-          // 3. KIRIM KE SERVER.JS (Ini yang kemarin hilang)
           const res = await fetch("/deploy", {
             method: "POST",
             body: formData,
           });
-
           const data = await res.json();
-          clearInterval(interval); // Stop animasi loading
-          bar.style.width = "100%"; // Penuhin bar
 
-          setTimeout(() => {
-            document.getElementById("loading").style.display = "none";
+          document.getElementById("loadingOverlay").style.display = "none"; // Hide Overlay
 
-            if (data.success) {
-              // SUKSES!
-              document.getElementById("resultBox").style.display = "block";
-              SoundFX.hover();
-              confetti({
-                particleCount: 200,
-                spread: 150,
-                colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
-              });
-
-              // --- PENTING: GANTI LINK JADI KE STATUS.HTML ---
-              const finalLink = document.getElementById("resultLink");
-              finalLink.innerText = "OPEN STATUS PAGE";
-              // Kita oper URL hasil deploy ke halaman status biar dia nunggu di sana
-              finalLink.href = `/status.html?url=${data.url}`;
-            } else {
-              // GAGAL DARI SERVER
-              alert("DEPLOYMENT FAILED: " + data.error);
-              location.reload();
-            }
-          }, 800);
+          if (data.success) {
+            form.style.display = "none";
+            document.getElementById("resultBox").style.display = "block";
+            SoundFX.hover();
+            confetti({
+              particleCount: 200,
+              spread: 150,
+              colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
+            });
+            const finalLink = document.getElementById("resultLink");
+            finalLink.innerText = "OPEN STATUS PAGE";
+            finalLink.href = `/status.html?url=${data.url}`;
+          } else {
+            alert("DEPLOYMENT FAILED: " + data.error);
+            location.reload();
+          }
         } catch (err) {
-          // GAGAL KONEKSI (Internet mati / Server Down)
-          clearInterval(interval);
           alert("CONNECTION ERROR: Gagal menghubungi server Hawai.");
           console.error(err);
           location.reload();
