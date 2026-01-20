@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hawai IDE | AI Powered</title>
+    <title>Hawai IDE | Pro</title>
     <link rel="icon" type="image/png" href="/logo.png" />
 
     <link
@@ -166,9 +166,8 @@
         background: rgba(0, 243, 255, 0.2);
         color: var(--neon);
         border-color: var(--neon);
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
       }
-
-      /* AI BUTTON STYLE */
       .btn-ai {
         border-color: var(--neon-purple);
         color: var(--neon-purple);
@@ -247,11 +246,15 @@
         color: #555;
         flex-shrink: 0;
       }
+      .status-group {
+        display: flex;
+        gap: 15px;
+      }
       .status-val {
         color: var(--neon);
       }
 
-      /* --- AI PANEL STYLES --- */
+      /* AI PANEL */
       .ai-panel {
         position: absolute;
         right: 20px;
@@ -333,7 +336,7 @@
         font-size: 0.8em;
       }
 
-      /* API KEY MODAL */
+      /* MODAL */
       .modal {
         position: fixed;
         inset: 0;
@@ -437,7 +440,7 @@
           letter-spacing: 2px;
         "
       >
-        INITIALIZING HAWAI PRO...
+        SYNCING WORKSPACE...
       </div>
     </div>
 
@@ -447,13 +450,12 @@
           AI CONFIGURATION
         </h3>
         <p style="font-size: 0.8rem; color: #888; margin-top: 10px">
-          Enter your <strong>Google Gemini API Key</strong> to enable the AI
-          Assistant.
+          Enter <strong>Google Gemini API Key</strong>. <br />
           <a
             href="https://aistudio.google.com/app/apikey"
             target="_blank"
             style="color: var(--neon)"
-            >Get Key Here</a
+            >Get Free Key Here</a
           >
         </p>
         <input
@@ -488,7 +490,7 @@
 
     <div class="ai-panel" id="aiPanel">
       <div class="ai-header">
-        <span><i class="ri-robot-2-line"></i> HAWAI CO-PILOT</span>
+        <span><i class="ri-robot-2-line"></i> GEMINI 2.0 FLASH</span>
         <i
           class="ri-close-line"
           style="cursor: pointer"
@@ -497,8 +499,7 @@
       </div>
       <div class="ai-content" id="aiChatContent">
         <div class="chat-bubble chat-ai">
-          Hello Commander! I'm ready to analyze your code. You can ask me to fix
-          errors or explain logic.
+          Ready to assist! I can write code, fix bugs, or optimize your project.
         </div>
       </div>
       <div class="ai-input-area">
@@ -506,7 +507,7 @@
           type="text"
           id="aiInput"
           class="ai-input"
-          placeholder="Ask AI to fix or generate..."
+          placeholder="Type instructions..."
           onkeypress="handleAiInput(event)"
         />
         <button class="btn btn-ai" onclick="sendAiMessage()">
@@ -519,20 +520,20 @@
 
     <div class="sidebar">
       <div class="sidebar-header">
-        <span><i class="ri-code-s-slash-line"></i> PRO IDE</span>
+        <span><i class="ri-code-s-slash-line"></i> HAWAI PRO</span>
         <i
           class="ri-settings-3-line"
           style="cursor: pointer; font-size: 1rem; color: #666"
           onclick="
             document.getElementById('settingsModal').style.display = 'flex'
           "
-          title="Settings"
+          title="AI Settings"
         ></i>
       </div>
       <div class="file-list" id="fileList"></div>
       <div class="sidebar-footer">
         <a href="/" class="btn" style="width: 100%; justify-content: center"
-          ><i class="ri-arrow-left-line"></i> DASHBOARD</a
+          ><i class="ri-arrow-left-line"></i> BACK TO DASHBOARD</a
         >
       </div>
     </div>
@@ -550,6 +551,7 @@
           <button class="btn" id="btnPreview" onclick="togglePreview()">
             <i class="ri-layout-column-line"></i> LIVE PREVIEW
           </button>
+
           <button class="btn" onclick="formatCode()">
             <i class="ri-brush-line"></i> FORMAT
           </button>
@@ -564,7 +566,7 @@
         <div id="preview-container">
           <div class="preview-header">
             <span style="display: flex; align-items: center; gap: 5px"
-              ><i class="ri-eye-line"></i> WEB SIMULATOR</span
+              ><i class="ri-eye-line"></i> WEB SIMULATOR (VIRTUAL)</span
             >
             <button
               class="btn"
@@ -607,8 +609,6 @@
       let currentPath = "";
       let isPreviewOpen = false;
       let debounceTimer = null;
-
-      // Ambil Key dari LocalStorage saat load
       let GEMINI_API_KEY = localStorage.getItem("HAWAI_GEMINI_KEY") || "";
 
       const projectFiles = {};
@@ -662,7 +662,7 @@
             projectFiles[currentPath].content = editor.getValue();
             if (isPreviewOpen) {
               clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(updatePreviewContent, 500);
+              debounceTimer = setTimeout(updatePreviewContent, 300);
             }
           }
         });
@@ -670,21 +670,6 @@
         editor.onDidChangeCursorPosition((e) => {
           document.getElementById("cursorLn").innerText = e.position.lineNumber;
           document.getElementById("cursorCol").innerText = e.position.column;
-        });
-
-        // ACTION: AI FIX
-        editor.addAction({
-          id: "ask-ai-fix",
-          label: "AI: Fix / Explain Code",
-          contextMenuGroupId: "navigation",
-          run: function (ed) {
-            toggleAI(true);
-            const selection = ed.getModel().getValueInRange(ed.getSelection());
-            const msg = selection
-              ? `Tolong perbaiki atau jelaskan kode ini:\n${selection}`
-              : "Cek kode saya apakah ada error?";
-            document.getElementById("aiInput").value = msg;
-          },
         });
 
         editor.addCommand(
@@ -699,7 +684,7 @@
         loadFiles();
       });
 
-      /* --- AI LOGIC (PERBAIKAN TOTAL) --- */
+      /* --- SMART AI LOGIC (MODEL SWITCHER) --- */
       function toggleAI(forceOpen = false) {
         const panel = document.getElementById("aiPanel");
         const btn = document.getElementById("btnAiToggle");
@@ -711,11 +696,10 @@
           panel.style.display = "flex";
           btn.classList.add("active");
           document.getElementById("aiInput").focus();
-          // Cek Key
           if (!GEMINI_API_KEY) {
             appendChatMessage(
               "ai",
-              "⚠️ API Key belum disetting. Klik icon gear di sidebar.",
+              "⚠️ API Key Missing. Click Settings ⚙️ icon.",
             );
             document.getElementById("settingsModal").style.display = "flex";
           }
@@ -728,13 +712,11 @@
           localStorage.setItem("HAWAI_GEMINI_KEY", key);
           GEMINI_API_KEY = key;
           document.getElementById("settingsModal").style.display = "none";
-          showToast("API Key Saved! Silakan coba chat AI.", "success");
+          showToast("API Key Saved!", "success");
           appendChatMessage(
             "ai",
-            "✅ API Key tersimpan. Ada yang bisa saya bantu?",
+            "✅ API Key Connected. What can I help you with?",
           );
-        } else {
-          showToast("API Key tidak boleh kosong", "error");
         }
       }
 
@@ -747,76 +729,64 @@
         const prompt = input.value.trim();
         if (!prompt) return;
 
-        // Cek API Key lagi
         if (!GEMINI_API_KEY) {
-          alert("Masukkan API Key Gemini dulu di Settings!");
           document.getElementById("settingsModal").style.display = "flex";
           return;
         }
 
-        // Tampilkan Pesan User
         appendChatMessage("user", prompt);
         input.value = "";
 
-        // Ambil Konteks Kode
         const currentCode = editor.getValue();
         const context = `
-Kamu adalah AI Coding Assistant bernama Hawai Copilot.
-Bahasa: Indonesia (Gaulkan dikit biar asik).
-File saat ini: ${currentPath || "Untitled"}
-Isi Kode User:
+Role: Expert Web Developer (Hawai Copilot).
+Current File: ${currentPath || "Untitled"}
+Code:
 \`\`\`
 ${currentCode.substring(0, 8000)} 
 \`\`\`
-(Kode dipotong jika terlalu panjang)
-
-Pertanyaan User: ${prompt}
+Task: ${prompt}
         `;
 
-        // Tampilkan Loading Bubble
         const loadingId = appendChatMessage("ai", "Thinking... 🤖");
 
+        // TRY NEWEST MODEL FIRST, FALLBACK TO STABLE
         try {
-          // URL API GEMINI
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-          const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: context }] }],
-            }),
-          });
-
-          // Cek Status HTTP
-          if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(
-              errData.error?.message || `HTTP Error ${response.status}`,
+          await tryGenerateContent(context, "gemini-2.0-flash-exp");
+        } catch (err2) {
+          console.warn("2.0 failed, trying 1.5-pro");
+          try {
+            await tryGenerateContent(context, "gemini-1.5-pro");
+          } catch (err15) {
+            console.error("All models failed");
+            document.getElementById(loadingId).remove();
+            appendChatMessage(
+              "ai",
+              `❌ **Error:** Could not connect to any Gemini model. Check API Key.`,
             );
           }
+        }
 
+        // Helper function
+        async function tryGenerateContent(ctx, modelName) {
+          const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contents: [{ parts: [{ text: ctx }] }] }),
+            },
+          );
+
+          if (!response.ok) throw new Error(response.statusText);
           const data = await response.json();
 
-          // Hapus Loading Bubble
-          const loadingBubble = document.getElementById(loadingId);
-          if (loadingBubble) loadingBubble.remove();
-
+          document.getElementById(loadingId).remove();
           if (data.candidates && data.candidates[0].content) {
-            const reply = data.candidates[0].content.parts[0].text;
-            appendChatMessage("ai", reply);
+            appendChatMessage("ai", data.candidates[0].content.parts[0].text);
           } else {
-            appendChatMessage("ai", "⚠️ AI tidak memberikan respon valid.");
+            throw new Error("No candidates");
           }
-        } catch (error) {
-          console.error("AI Error:", error);
-          const loadingBubble = document.getElementById(loadingId);
-          if (loadingBubble) loadingBubble.remove();
-
-          appendChatMessage(
-            "ai",
-            `❌ **Error:** ${error.message}\n\nPastikan API Key benar dan koneksi internet stabil.`,
-          );
         }
       }
 
@@ -825,8 +795,6 @@ Pertanyaan User: ${prompt}
         const div = document.createElement("div");
         div.className = `chat-bubble chat-${role}`;
         div.id = `msg-${Date.now()}`;
-
-        // Render Markdown jika AI (sederhana)
         if (role === "ai") {
           try {
             div.innerHTML = marked.parse(text);
@@ -836,13 +804,12 @@ Pertanyaan User: ${prompt}
         } else {
           div.innerText = text;
         }
-
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
         return div.id;
       }
 
-      /* --- PREVIEW LOGIC (SAMA SEPERTI SEBELUMNYA) --- */
+      /* --- PREVIEW LOGIC --- */
       function togglePreview() {
         const workspace = document.getElementById("workspace");
         const btn = document.getElementById("btnPreview");
