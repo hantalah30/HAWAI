@@ -315,7 +315,7 @@
           letter-spacing: 2px;
         "
       >
-        LOADING IDE...
+        SYNCING FILES...
       </div>
     </div>
 
@@ -355,11 +355,10 @@
 
       <div class="workspace">
         <div id="monaco-container"></div>
-
         <div id="preview-container">
           <div class="preview-header">
             <span style="display: flex; align-items: center; gap: 5px"
-              ><i class="ri-eye-line"></i> SIMULATOR</span
+              ><i class="ri-eye-line"></i> SIMULATOR (HTML+CSS+JS)</span
             >
             <button
               class="btn"
@@ -371,7 +370,7 @@
           </div>
           <iframe
             id="previewFrame"
-            sandbox="allow-scripts allow-same-origin"
+            sandbox="allow-scripts allow-same-origin allow-modals"
           ></iframe>
         </div>
       </div>
@@ -396,20 +395,21 @@
       let currentSha = "";
       let currentPath = "";
       let isPreviewOpen = false;
+      let debounceTimer = null;
 
-      // PROJECT FILE CACHE (PENTING UNTUK PREVIEW)
-      // Kita menyimpan isi semua file di sini agar preview bisa menggabungkan HTML+CSS+JS
+      // CACHE STORAGE (Menyimpan seluruh isi file project di memori)
       const projectFiles = {};
 
       const params = new URLSearchParams(window.location.search);
       const repoName = params.get("repo");
+      const liveUrl = params.get("url");
 
       if (!repoName) {
         alert("Repo not found");
         window.location.href = "/";
       }
 
-      /* --- INITIALIZE MONACO --- */
+      /* --- MONACO CONFIG --- */
       require.config({
         paths: {
           vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
@@ -444,22 +444,24 @@
           },
         );
 
-        // LIVE UPDATE LISTENER
+        // REALTIME TYPING LISTENER
         editor.onDidChangeModelContent(() => {
-          if (currentPath) {
-            // Update cache memory saat mengetik
+          if (currentPath && projectFiles[currentPath]) {
             projectFiles[currentPath].content = editor.getValue();
-            if (isPreviewOpen) updatePreviewContent();
+
+            // Debounce Preview Update (Biar ga berat)
+            if (isPreviewOpen) {
+              clearTimeout(debounceTimer);
+              debounceTimer = setTimeout(updatePreviewContent, 300); // 300ms delay
+            }
           }
         });
 
-        // CURSOR POSITION
         editor.onDidChangeCursorPosition((e) => {
           document.getElementById("cursorLn").innerText = e.position.lineNumber;
           document.getElementById("cursorCol").innerText = e.position.column;
         });
 
-        // SHORTCUTS
         editor.addCommand(
           monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
           saveFile,
@@ -469,11 +471,11 @@
           formatCode,
         );
 
-        document.getElementById("global-loader").style.display = "none";
+        // START LOADING
         loadFiles();
       });
 
-      /* --- CORE PREVIEW LOGIC (THE FIX) --- */
+      /* --- PREVIEW LOGIC (SMART BUNDLER) --- */
       function togglePreview() {
         const pContainer = document.getElementById("preview-container");
         const btn = document.getElementById("btnPreview");
@@ -486,7 +488,7 @@
           btn.classList.add("btn-active");
           status.innerText = "Realtime ON";
           status.style.color = "var(--neon-green)";
-          refreshPreview(); // Full Build
+          refreshPreview();
         } else {
           pContainer.classList.remove("open");
           btn.classList.remove("btn-active");
@@ -504,76 +506,86 @@
       function updatePreviewContent() {
         const frame = document.getElementById("previewFrame");
 
-        // Cari file index.html atau file HTML yang sedang dibuka
+        // 1. Cari File HTML Utama (index.html atau file html yang sedang dibuka)
         let htmlFile = null;
-
-        if (currentPath.endsWith(".html")) {
+        if (currentPath && currentPath.endsWith(".html")) {
           htmlFile = projectFiles[currentPath];
         } else {
-          // Jika sedang edit CSS/JS, cari index.html di project
-          const files = Object.values(projectFiles);
+          // Jika lagi edit CSS/JS, cari index.html
           htmlFile =
-            files.find((f) => f.name === "index.html") ||
-            files.find((f) => f.name.endsWith(".html"));
+            Object.values(projectFiles).find((f) => f.name === "index.html") ||
+            Object.values(projectFiles).find((f) => f.name.endsWith(".html"));
         }
 
         if (!htmlFile) {
-          // Tidak ada file HTML yang bisa dirender
+          frame.srcdoc = `<div style="color:#888; font-family:monospace; padding:20px;">No HTML file found to render.</div>`;
           return;
         }
 
         let finalHTML = htmlFile.content;
 
-        // INJECT CSS (Ganti <link rel="stylesheet"> dengan <style> isi file CSS kita)
+        // 2. INJECT BASE TAG (Agar gambar/link external tetap jalan dari server)
+        // Kita hanya inject jika belum ada, dan kita arahkan ke Live URL
+        if (liveUrl && !finalHTML.includes("<base")) {
+          finalHTML = finalHTML.replace(
+            "<head>",
+            `<head><base href="${liveUrl}/">`,
+          );
+        }
+
+        // 3. INJECT CSS (Replace <link> dengan <style> dari cache)
         const cssFiles = Object.values(projectFiles).filter((f) =>
           f.name.endsWith(".css"),
         );
         cssFiles.forEach((css) => {
-          // Regex untuk mencari <link> yang mengarah ke file CSS ini
-          // Contoh: href="style.css" atau href="./style.css"
+          // Regex match: href="style.css", href="./style.css", href="/style.css"
+          // Escape nama file untuk regex
+          const safeName = css.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           const regex = new RegExp(
-            `<link[^>]+href=["']\\.?\\/?${css.name}["'][^>]*>`,
+            `<link[^>]+href=["']\\.?\\/?${safeName}["'][^>]*>`,
             "gi",
           );
+
           if (finalHTML.match(regex)) {
-            // Replace tag <link> dengan <style>...</style>
             finalHTML = finalHTML.replace(
               regex,
-              `<style>\n/* Injected ${css.name} */\n${css.content}\n</style>`,
+              `<style data-source="${css.name}">\n${css.content}\n</style>`,
             );
           } else {
-            // Jika tidak ketemu link-nya (mungkin file baru), inject aja ke head
+            // Fallback: Inject di head kalau ga nemu linknya
             finalHTML = finalHTML.replace(
               "</head>",
-              `<style>\n/* Auto-injected ${css.name} */\n${css.content}\n</style></head>`,
+              `<style data-source="${css.name}">\n${css.content}\n</style></head>`,
             );
           }
         });
 
-        // INJECT JS (Ganti <script src="..."> dengan <script> isi file JS kita)
+        // 4. INJECT JS (Replace <script src> dengan <script> dari cache)
         const jsFiles = Object.values(projectFiles).filter((f) =>
           f.name.endsWith(".js"),
         );
         jsFiles.forEach((js) => {
+          const safeName = js.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
           const regex = new RegExp(
-            `<script[^>]+src=["']\\.?\\/?${js.name}["'][^>]*><\/script>`,
+            `<script[^>]+src=["']\\.?\\/?${safeName}["'][^>]*>\\s*<\\/script>`,
             "gi",
           );
+
           if (finalHTML.match(regex)) {
             finalHTML = finalHTML.replace(
               regex,
-              `<script>\n/* Injected ${js.name} */\n${js.content}\n<\/script>`,
+              `<script data-source="${js.name}">\n${js.content}\n<\/script>`,
+            );
+          } else {
+            // JS biasanya di akhir body
+            finalHTML = finalHTML.replace(
+              "</body>",
+              `<script data-source="${js.name}">\n${js.content}\n<\/script></body>`,
             );
           }
         });
 
-        // Inject Base Tag (Optional, for images/assets hosted elsewhere)
-        // Note: Kita matikan dulu agar tidak conflict dengan blob local
-        // if (!finalHTML.includes('<base')) {
-        //    finalHTML = finalHTML.replace('<head>', `<head><base href=".">`);
-        // }
-
-        // Render ke Iframe
+        // 5. RENDER
         frame.srcdoc = finalHTML;
       }
 
@@ -593,56 +605,60 @@
             // Sort: index.html first
             data.files.sort((a, b) => (a.name === "index.html" ? -1 : 1));
 
-            // PRE-LOAD ALL FILES CONTENT FOR PREVIEW CACHE
-            // Kita fetch isinya satu per satu di background agar preview ready
-            await Promise.all(
-              data.files.map(async (file) => {
-                // Setup UI item
-                const div = document.createElement("div");
-                div.className = "file-item";
-                let icon = "ri-file-line";
-                if (file.name.endsWith(".html")) icon = "ri-html5-line";
-                if (file.name.endsWith(".css")) icon = "ri-css3-line";
-                if (file.name.endsWith(".js")) icon = "ri-javascript-line";
-                div.innerHTML = `<i class="${icon}"></i> ${file.name}`;
-                div.id = `file-${file.path.replace(/\./g, "-")}`; // Unique ID for UI
-                div.onclick = () => selectFile(file.path);
-                list.appendChild(div);
+            // DOWNLOAD SEMUA FILE KE CACHE (PENTING BUAT PREVIEW)
+            const promises = data.files.map(async (file) => {
+              // UI Item
+              const div = document.createElement("div");
+              div.className = "file-item";
+              let icon = "ri-file-line";
+              if (file.name.endsWith(".html")) icon = "ri-html5-line";
+              if (file.name.endsWith(".css")) icon = "ri-css3-line";
+              if (file.name.endsWith(".js")) icon = "ri-javascript-line";
 
-                // Fetch content
-                const contentRes = await fetch("/api/read", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ repoName, filePath: file.path }),
-                });
-                const contentData = await contentRes.json();
+              div.innerHTML = `<i class="${icon}"></i> ${file.name}`;
+              div.id = `file-${file.path.replace(/[^a-zA-Z0-9]/g, "-")}`;
+              div.onclick = () => selectFile(file.path);
+              list.appendChild(div);
 
-                // Store to Cache
-                projectFiles[file.path] = {
-                  name: file.name,
-                  path: file.path,
-                  sha: contentData.sha,
-                  content: contentData.content || "",
-                };
-              }),
-            );
+              // Fetch Content
+              const cRes = await fetch("/api/read", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ repoName, filePath: file.path }),
+              });
+              const cData = await cRes.json();
 
-            // Auto open index.html
+              // Simpan ke Cache
+              projectFiles[file.path] = {
+                name: file.name,
+                path: file.path,
+                sha: cData.sha,
+                content: cData.content || "",
+              };
+            });
+
+            await Promise.all(promises);
+            document.getElementById("global-loader").style.display = "none";
+
+            // Auto open first file
             if (projectFiles["index.html"]) selectFile("index.html");
             else if (data.files.length > 0) selectFile(data.files[0].path);
           }
         } catch (e) {
           console.error(e);
-          showToast("Failed to load files", "error");
+          showToast("Failed to load project", "error");
+          document.getElementById("global-loader").innerText =
+            "ERROR LOADING FILES";
         }
       }
 
       function selectFile(path) {
-        // UI Active State
         document
           .querySelectorAll(".file-item")
           .forEach((el) => el.classList.remove("active"));
-        const el = document.getElementById(`file-${path.replace(/\./g, "-")}`);
+        const el = document.getElementById(
+          `file-${path.replace(/[^a-zA-Z0-9]/g, "-")}`,
+        );
         if (el) el.classList.add("active");
 
         currentPath = path;
@@ -650,7 +666,6 @@
 
         document.getElementById("currentFileName").innerText = file.name;
 
-        // Set Language
         let lang = "plaintext";
         if (file.name.endsWith(".html")) lang = "html";
         if (file.name.endsWith(".css")) lang = "css";
@@ -659,17 +674,13 @@
         document.getElementById("langDisplay").innerText = lang.toUpperCase();
         monaco.editor.setModelLanguage(editor.getModel(), lang);
 
-        // Set Content from Cache
-        // Penting: Gunakan setValue dari Monaco, jangan innerText
-        // Kita gunakan cache karena sudah di-fetch di awal
+        // PENTING: Set value tanpa mentrigger event change berulang kali
         editor.setValue(file.content);
         currentSha = file.sha;
 
-        // Trigger Preview Update if panel is open
         if (isPreviewOpen) updatePreviewContent();
       }
 
-      /* --- ACTIONS --- */
       function formatCode() {
         if (!currentPath) return;
         const code = editor.getValue();
@@ -687,8 +698,7 @@
           plugins = prettierPlugins;
         }
 
-        if (!parser)
-          return showToast("No formatter for this file type.", "error");
+        if (!parser) return showToast("No formatter for this file.", "error");
 
         try {
           const formatted = prettier.format(code, {
@@ -698,18 +708,17 @@
             printWidth: 80,
           });
           editor.setValue(formatted);
-          // Update cache juga
-          projectFiles[currentPath].content = formatted;
+          projectFiles[currentPath].content = formatted; // Update cache
           showToast("Code formatted!", "success");
         } catch (e) {
-          showToast("Syntax Error! Fix code first.", "error");
+          showToast("Syntax Error!", "error");
         }
       }
 
       async function saveFile() {
         if (!currentPath) return showToast("No file selected", "error");
         const content = editor.getValue();
-        showToast("Saving to Cloud...", "info");
+        showToast("Saving...", "info");
 
         try {
           const res = await fetch("/api/save", {
@@ -726,7 +735,7 @@
 
           if (data.success) {
             showToast("Saved & Triggered Deploy!", "success");
-            // Update cache logic if SHA changes (optional for simple usage)
+            // Background refresh SHA (optional, github changes SHA on commit)
           } else {
             showToast("Save Failed!", "error");
           }
