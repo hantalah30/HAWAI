@@ -520,8 +520,8 @@
       <div class="ai-content" id="aiChatContent">
         <div class="chat-bubble chat-ai">
           <strong>System Online.</strong><br />
-          Saya menggunakan engine Llama 3 via Groq. Sangat cepat & gratis.<br />
-          Kirim kode atau tanya apa saja, Commander!
+          I'm using Llama 3 via Groq. Fast & Free.<br />
+          How can I help you code today?
         </div>
       </div>
       <div class="ai-input-area">
@@ -685,7 +685,7 @@
             projectFiles[currentPath].content = editor.getValue();
             if (isPreviewOpen) {
               clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(updatePreviewContent, 500);
+              debounceTimer = setTimeout(updatePreviewContent, 300);
             }
           }
         });
@@ -789,45 +789,28 @@ Jawab singkat, jelas, dan berikan kode solusi jika perlu.
         const loadingId = appendChatMessage("ai", "Thinking... ⚡");
 
         try {
-          const response = await fetch(
-            "https://api.groq.com/openai/v1/chat/completions",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${GROQ_API_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                messages: [
-                  {
-                    role: "system",
-                    content:
-                      "You are a helpful coding assistant. Use markdown.",
-                  },
-                  { role: "user", content: context },
-                ],
-                model: "llama3-8b-8192",
-                temperature: 0.5,
-                max_tokens: 1024,
-              }),
-            },
-          );
-
-          if (!response.ok)
-            throw new Error("Groq API Error: " + response.statusText);
-
+          // CALL SERVER PROXY (BYPASS BROWSER CORS)
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              apiKey: GROQ_API_KEY,
+              messages: [
+                { role: "system", content: "You are a coding expert." },
+                { role: "user", content: context },
+              ],
+            }),
+          });
           const data = await response.json();
           document.getElementById(loadingId).remove();
 
-          if (data.choices && data.choices[0]) {
+          if (data.choices)
             appendChatMessage("ai", data.choices[0].message.content);
-          } else {
-            appendChatMessage("ai", "No response from AI.");
-          }
+          else
+            appendChatMessage("ai", "⚠️ Error: " + (data.error || "Unknown"));
         } catch (error) {
-          console.error(error);
           document.getElementById(loadingId).remove();
-          appendChatMessage("ai", `❌ Error: ${error.message}`);
+          appendChatMessage("ai", "❌ Connection Error to Backend.");
         }
       }
 
