@@ -1256,7 +1256,7 @@
             });
             const finalLink = document.getElementById("resultLink");
             finalLink.innerText = "OPEN STATUS PAGE";
-            finalLink.href = `/status.html?url=${data.url}`;
+            finalLink.href = `/status.html?url=${data.url}&repo=${data.repo}`;
           } else {
             alert("DEPLOYMENT FAILED: " + data.error);
             location.reload();

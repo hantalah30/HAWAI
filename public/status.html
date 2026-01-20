@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SYSTEM BOOT | HAWAI HOSTING</title>
+    <title>SYSTEM STATUS | HAWAI</title>
     <link rel="icon" type="image/png" href="/logo.png" />
     <link
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&family=Syncopate:wght@700&display=swap"
@@ -20,7 +20,7 @@
         --neon-blue: #00f3ff;
         --neon-purple: #bc13fe;
         --neon-green: #00ff9d;
-        --glass-bg: rgba(10, 15, 20, 0.75);
+        --glass-bg: rgba(10, 15, 20, 0.85);
         --border-color: rgba(0, 243, 255, 0.3);
       }
 
@@ -40,7 +40,7 @@
         align-items: center;
       }
 
-      /* CRT OVERLAY */
+      /* BACKGROUND FX */
       .crt-overlay {
         position: fixed;
         top: 0;
@@ -74,8 +74,6 @@
           opacity: 0.85;
         }
       }
-
-      /* VORTEX CANVAS (SAME AS INDEX) */
       #vortex-canvas {
         position: fixed;
         top: 0;
@@ -83,7 +81,7 @@
         z-index: -1;
       }
 
-      /* BOOT LOADER (SAME AS INDEX, BUT MINI) */
+      /* BOOT LOADER */
       .boot-layer {
         position: fixed;
         top: 0;
@@ -97,6 +95,7 @@
         align-items: center;
         flex-direction: column;
         gap: 20px;
+        transition: opacity 1s;
       }
       .mini-reactor {
         width: 100px;
@@ -174,7 +173,7 @@
         display: none;
       }
 
-      /* HUD DASHBOARD */
+      /* HUD INTERFACE */
       .hud-container {
         position: relative;
         z-index: 10;
@@ -199,12 +198,13 @@
         font-weight: 700;
         font-size: 2rem;
         color: white;
-        margin-bottom: 40px;
+        margin-bottom: 20px;
         text-shadow: 0 0 20px var(--neon-purple);
         text-align: center;
         letter-spacing: 2px;
       }
 
+      /* LOADING BARS */
       .status-panel {
         display: flex;
         justify-content: space-between;
@@ -220,7 +220,7 @@
         background: #000;
         border: 1px solid #333;
         position: relative;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
         border-radius: 4px;
         overflow: hidden;
       }
@@ -251,11 +251,12 @@
         }
       }
 
-      /* ENHANCED NETWORK GRID */
+      /* GRID STATUS */
       .grid-status {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 20px;
+        margin-bottom: 30px;
       }
       .step-item {
         background: rgba(0, 0, 0, 0.4);
@@ -302,6 +303,62 @@
       }
       .step-item.active .step-info p {
         color: var(--neon-green);
+      }
+
+      /* SUCCESS ACTIONS */
+      .action-deck {
+        display: none; /* Hidden by default */
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+        border-top: 1px solid #333;
+        padding-top: 30px;
+        animation: slideUp 0.5s ease-out;
+      }
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .btn-cyber {
+        background: transparent;
+        border: 1px solid var(--neon-blue);
+        color: var(--neon-blue);
+        font-family: "Rajdhani";
+        font-weight: 700;
+        font-size: 1rem;
+        padding: 15px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        position: relative;
+        transition: 0.3s;
+        width: 100%;
+        text-align: center;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        clip-path: polygon(5% 0, 100% 0, 100% 70%, 95% 100%, 0 100%, 0 30%);
+      }
+      .btn-cyber:hover {
+        background: var(--neon-blue);
+        color: #000;
+        box-shadow: 0 0 30px var(--neon-blue);
+      }
+      .btn-alt {
+        border-color: var(--neon-purple);
+        color: var(--neon-purple);
+      }
+      .btn-alt:hover {
+        background: var(--neon-purple);
+        box-shadow: 0 0 30px var(--neon-purple);
       }
 
       /* CURSOR */
@@ -370,7 +427,8 @@
         alt="HW"
         onerror="this.style.display = 'none'"
       />
-      <h1 class="glitch-title">DEPLOYING SEQUENCE</h1>
+
+      <h1 class="glitch-title" id="mainTitle">DEPLOYING SEQUENCE</h1>
 
       <div class="status-panel">
         <span id="statusLabel">INITIALIZING EDGE NETWORK...</span>
@@ -408,6 +466,15 @@
           </div>
         </div>
       </div>
+
+      <div class="action-deck" id="actionDeck">
+        <a href="#" target="_blank" id="btnLive" class="btn-cyber interactable">
+          <i class="ri-external-link-line"></i> OPEN LIVE SITE
+        </a>
+        <a href="#" id="btnEdit" class="btn-cyber btn-alt interactable">
+          <i class="ri-code-s-slash-line"></i> OPEN EDITOR
+        </a>
+      </div>
     </div>
 
     <script>
@@ -437,6 +504,10 @@
         playPing() {
           this.playTone(800, "sine", 0.1, 0.05);
         }
+        playSuccess() {
+          this.playTone(600, "square", 0.1, 0.1);
+          setTimeout(() => this.playTone(900, "square", 0.2, 0.1), 100);
+        }
         playBoot() {
           if (audioCtx.state === "suspended") return;
           const osc = audioCtx.createOscillator();
@@ -459,7 +530,7 @@
       }
       const sfx = new SoundFX();
 
-      // === MOUSE ===
+      // === MOUSE FX ===
       const dot = document.getElementById("cDot"),
         circle = document.getElementById("cCircle");
       let mouseX = window.innerWidth / 2,
@@ -502,13 +573,13 @@
         }, 2000);
       };
 
-      // === DEPLOY PROCESS LOGIC ===
+      // === MAIN PROCESS LOGIC ===
       const progressBar = document.getElementById("progressBar");
       const pctLabel = document.getElementById("pctLabel");
       const statusLabel = document.getElementById("statusLabel");
 
       let progress = 0;
-      let speed = 0.4; // Constant speed, no boost
+      let speed = 0.5;
       let deployInterval;
 
       function updateStep(id, title, status) {
@@ -526,7 +597,7 @@
           progressBar.style.width = progress + "%";
           pctLabel.innerText = Math.floor(progress) + "%";
 
-          // Milestone events
+          // Fake Milestones
           if (
             progress > 15 &&
             !document.getElementById("s1").classList.contains("active")
@@ -556,17 +627,41 @@
       }
 
       function finish() {
-        statusLabel.innerText = "DEPLOYMENT COMPLETE";
-        statusLabel.style.color = "var(--neon-green)";
+        // 1. Ambil URL Parameters
         const params = new URLSearchParams(window.location.search);
-        const target = params.get("url");
-        setTimeout(() => {
-          if (target) window.location.href = target;
-          else alert("Target URL not found!");
-        }, 1200);
+        const targetUrl = params.get("url");
+        const repoName = params.get("repo");
+
+        // 2. Update UI
+        statusLabel.innerText = "DEPLOYMENT SUCCESSFUL";
+        statusLabel.style.color = "var(--neon-green)";
+        document.getElementById("mainTitle").innerText = "SYSTEM ONLINE";
+        document.getElementById("mainTitle").style.color = "var(--neon-green)";
+        sfx.playSuccess();
+
+        // 3. Setup Tombol Links
+        const btnLive = document.getElementById("btnLive");
+        const btnEdit = document.getElementById("btnEdit");
+
+        if (targetUrl) btnLive.href = targetUrl;
+        else btnLive.style.opacity = "0.5";
+
+        // Perbaikan: Link Editor menggunakan Repo Name dari parameter
+        if (repoName && targetUrl) {
+          btnEdit.href = `/editor.html?repo=${repoName}&url=${targetUrl}`;
+        } else {
+          btnEdit.style.opacity = "0.5";
+          btnEdit.onclick = (e) => {
+            e.preventDefault();
+            alert("Repo ID missing. Re-deploy to enable editor.");
+          };
+        }
+
+        // 4. Tampilkan Menu
+        document.getElementById("actionDeck").style.display = "grid";
       }
 
-      // === VORTEX CANVAS (Shared Logic) ===
+      // === VORTEX BACKGROUND ===
       const cvs = document.getElementById("vortex-canvas"),
         ctx = cvs.getContext("2d");
       let width, height;
