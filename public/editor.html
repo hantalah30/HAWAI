@@ -3,27 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hawai Code Editor</title>
+    <title>Hawai IDE | Pro</title>
     <link rel="icon" type="image/png" href="/logo.png" />
+
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@600;700&display=swap"
       rel="stylesheet"
     />
     <link
       href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"
       rel="stylesheet"
     />
+
+    <script src="https://unpkg.com/prettier@2.8.8/standalone.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-html.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-postcss.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-babel.js"></script>
+    <script src="https://unpkg.com/prettier@2.8.8/parser-estree.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
     <style>
       :root {
-        --bg: #050505;
-        --sidebar: #0a0f14;
+        --bg: #020204;
+        --sidebar: #050508;
+        --sidebar-border: #1a1a20;
         --neon: #00f3ff;
-        --text: #ccc;
+        --neon-green: #00ff9d;
+        --neon-purple: #bc13fe;
+        --text: #a0a0a0;
+        --text-active: #ffffff;
+        --hover-bg: rgba(0, 243, 255, 0.05);
       }
+
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
+        outline: none;
       }
       body {
         background: var(--bg);
@@ -34,126 +51,220 @@
         overflow: hidden;
       }
 
-      /* SIDEBAR */
+      /* --- SIDEBAR --- */
       .sidebar {
-        width: 250px;
+        width: 260px;
         background: var(--sidebar);
-        border-right: 1px solid #333;
+        border-right: 1px solid var(--sidebar-border);
         display: flex;
         flex-direction: column;
+        user-select: none;
       }
       .sidebar-header {
         padding: 20px;
         font-family: "Rajdhani";
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         color: var(--neon);
-        border-bottom: 1px solid #333;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--sidebar-border);
       }
       .file-list {
         flex: 1;
-        padding: 10px;
+        padding: 10px 0;
         overflow-y: auto;
       }
+      .file-label {
+        font-size: 0.75rem;
+        padding: 10px 20px;
+        color: #555;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
       .file-item {
-        padding: 10px;
+        padding: 8px 20px;
         cursor: pointer;
-        border-radius: 4px;
         transition: 0.2s;
         display: flex;
         align-items: center;
         gap: 10px;
+        font-size: 0.9rem;
+        border-left: 2px solid transparent;
       }
       .file-item:hover {
-        background: rgba(0, 243, 255, 0.1);
-        color: white;
+        background: var(--hover-bg);
+        color: var(--text-active);
       }
       .file-item.active {
-        background: rgba(0, 243, 255, 0.2);
+        background: rgba(0, 243, 255, 0.1);
         color: var(--neon);
-        border-left: 3px solid var(--neon);
+        border-left: 2px solid var(--neon);
+      }
+      .sidebar-footer {
+        padding: 15px;
+        border-top: 1px solid var(--sidebar-border);
       }
 
-      /* EDITOR AREA */
+      /* --- MAIN EDITOR --- */
       .main-editor {
         flex: 1;
         display: flex;
         flex-direction: column;
+        position: relative;
       }
-      .editor-header {
-        padding: 10px 20px;
-        background: #111;
-        border-bottom: 1px solid #333;
+
+      .editor-toolbar {
+        height: 50px;
+        background: #08080a;
+        border-bottom: 1px solid var(--sidebar-border);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: 0 20px;
       }
-      .file-name-display {
+      .tab-name {
         font-size: 0.9rem;
-        color: #888;
-      }
-
-      /* TEXTAREA (Simple Editor) */
-      #codeArea {
-        flex: 1;
-        background: #080808;
-        color: #eee;
-        border: none;
-        padding: 20px;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 14px;
-        line-height: 1.6;
-        resize: none;
-        outline: none;
-      }
-
-      /* BUTTONS */
-      .btn {
-        padding: 8px 20px;
-        border: 1px solid var(--neon);
-        background: transparent;
-        color: var(--neon);
-        cursor: pointer;
-        font-family: "Rajdhani";
-        font-weight: 700;
-        transition: 0.3s;
-        text-decoration: none;
-        display: inline-flex;
+        color: var(--text-active);
+        display: flex;
         align-items: center;
-        gap: 5px;
-        font-size: 0.9rem;
+        gap: 8px;
+      }
+      .unsaved-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--neon-purple);
+        border-radius: 50%;
+        display: none;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        background: transparent;
+        border: 1px solid #333;
+        color: var(--text);
+        padding: 6px 14px;
+        font-family: "Rajdhani";
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.2s;
+        text-decoration: none;
+        border-radius: 4px;
       }
       .btn:hover {
-        background: var(--neon);
-        color: black;
+        border-color: var(--neon);
+        color: var(--neon);
+        background: rgba(0, 243, 255, 0.05);
       }
-      .btn-save {
+      .btn-primary {
         background: var(--neon);
-        color: black;
+        color: #000;
+        border: none;
       }
-      .btn-save:hover {
-        box-shadow: 0 0 20px var(--neon);
+      .btn-primary:hover {
+        background: #00c4cf;
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        color: black;
       }
 
-      /* LOADING OVERLAY */
-      #loader {
+      /* Monaco Container */
+      #monaco-container {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      /* Status Bar */
+      .status-bar {
+        height: 25px;
+        background: var(--sidebar);
+        border-top: 1px solid var(--sidebar-border);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 0 15px;
+        font-size: 0.75rem;
+        color: #555;
+        gap: 20px;
+      }
+      .status-item {
+        display: flex;
+        gap: 5px;
+      }
+      .status-val {
+        color: var(--neon);
+      }
+
+      /* --- TOAST NOTIFICATION --- */
+      .toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 9999;
+      }
+      .toast {
+        background: rgba(10, 15, 20, 0.95);
+        border: 1px solid #333;
+        border-left: 3px solid var(--neon);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideIn 0.3s ease-out forwards;
+        transform: translateX(100%);
+      }
+      .toast.success {
+        border-left-color: var(--neon-green);
+      }
+      .toast.error {
+        border-left-color: #ff3333;
+      }
+      @keyframes slideIn {
+        to {
+          transform: translateX(0);
+        }
+      }
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+      }
+
+      /* --- LOADER --- */
+      #global-loader {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.8);
+        background: #020204;
+        z-index: 10000;
         display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 999;
-        display: none;
-        flex-direction: column;
         gap: 15px;
       }
       .spinner {
         width: 40px;
         height: 40px;
-        border: 3px solid transparent;
+        border: 2px solid #333;
         border-top-color: var(--neon);
         border-radius: 50%;
-        animation: spin 1s linear infinite;
+        animation: spin 0.8s linear infinite;
       }
       @keyframes spin {
         to {
@@ -163,59 +274,166 @@
     </style>
   </head>
   <body>
-    <div id="loader">
+    <div id="global-loader">
       <div class="spinner"></div>
       <div
-        id="loaderText"
-        style="color: white; font-family: &quot;Rajdhani&quot;"
+        style="
+          font-family: &quot;Rajdhani&quot;;
+          color: #666;
+          letter-spacing: 2px;
+        "
+        id="loader-text"
       >
-        PROCESSING...
+        INITIALIZING IDE...
       </div>
     </div>
 
+    <div class="toast-container" id="toastContainer"></div>
+
     <div class="sidebar">
-      <div class="sidebar-header"><i class="ri-code-box-line"></i> EDITOR</div>
-      <div class="file-list" id="fileList"></div>
-      <div style="padding: 20px; border-top: 1px solid #333">
-        <a href="/" class="btn" style="width: 100%; justify-content: center"
-          >EXIT EDITOR</a
+      <div class="sidebar-header">
+        <i class="ri-code-s-slash-line" style="font-size: 1.5rem"></i> HAWAI
+        <span
+          style="
+            font-size: 0.7rem;
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #888;
+          "
+          >PRO</span
         >
+      </div>
+      <div class="file-label">Explorer</div>
+      <div class="file-list" id="fileList"></div>
+      <div class="sidebar-footer">
+        <a href="/" class="btn" style="width: 100%; justify-content: center">
+          <i class="ri-logout-box-r-line"></i> EXIT IDE
+        </a>
       </div>
     </div>
 
     <div class="main-editor">
-      <div class="editor-header">
-        <span class="file-name-display" id="currentFile">SELECT A FILE</span>
-        <div style="display: flex; gap: 10px">
-          <a id="liveLink" href="#" target="_blank" class="btn"
-            >OPEN LIVE SITE</a
-          >
-          <button class="btn btn-save" onclick="saveFile()">
-            <i class="ri-save-3-line"></i> SAVE & DEPLOY
+      <div class="editor-toolbar">
+        <div class="tab-name">
+          <i class="ri-file-code-line" style="color: var(--neon)"></i>
+          <span id="currentFileName">No File Selected</span>
+          <div class="unsaved-dot" id="unsavedDot"></div>
+        </div>
+        <div class="toolbar-actions">
+          <a id="liveLink" href="#" target="_blank" class="btn">
+            <i class="ri-external-link-line"></i>
+            <span
+              style="display: none; @media (min-width: 800px) {display: inline}"
+              >LIVE</span
+            >
+          </a>
+          <button class="btn" onclick="formatCode()">
+            <i class="ri-brush-line"></i> FORMAT
+          </button>
+          <button class="btn btn-primary" onclick="saveFile()">
+            <i class="ri-save-3-fill"></i> SAVE
           </button>
         </div>
       </div>
-      <textarea id="codeArea" spellcheck="false" disabled></textarea>
+
+      <div id="monaco-container"></div>
+
+      <div class="status-bar">
+        <div class="status-item"><span id="langDisplay">TXT</span></div>
+        <div class="status-item">
+          Ln <span class="status-val" id="cursorLn">1</span>, Col
+          <span class="status-val" id="cursorCol">1</span>
+        </div>
+        <div class="status-item">
+          <i class="ri-check-double-line" style="color: var(--neon-green)"></i>
+          Ready
+        </div>
+      </div>
     </div>
 
     <script>
+      /* --- GLOBAL VARIABLES --- */
+      let editor; // Monaco instance
+      let currentSha = "";
+      let currentPath = "";
+
       const params = new URLSearchParams(window.location.search);
       const repoName = params.get("repo");
       const liveUrl = params.get("url");
 
       if (!repoName) {
-        alert("No repository specified!");
+        alert("Repo not found");
         window.location.href = "/";
       }
-
       document.getElementById("liveLink").href = liveUrl;
 
-      let currentSha = "";
-      let currentPath = "";
+      /* --- INITIALIZE MONACO EDITOR --- */
+      require.config({
+        paths: {
+          vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
+        },
+      });
 
-      // 1. LOAD FILE LIST
+      require(["vs/editor/editor.main"], function () {
+        // Define Custom Theme to match "Void Black"
+        monaco.editor.defineTheme("hawai-dark", {
+          base: "vs-dark",
+          inherit: true,
+          rules: [{ background: "020204" }],
+          colors: {
+            "editor.background": "#020204",
+            "editor.lineHighlightBackground": "#111111",
+            "editorLineNumber.foreground": "#444444",
+            "editor.selectionBackground": "#00f3ff20",
+          },
+        });
+
+        // Create Editor
+        editor = monaco.editor.create(
+          document.getElementById("monaco-container"),
+          {
+            value: "// Select a file from sidebar to start editing...",
+            language: "javascript",
+            theme: "hawai-dark",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 14,
+            minimap: { enabled: true },
+            automaticLayout: true,
+            scrollBeyondLastLine: false,
+            padding: { top: 20 },
+            lineNumbersMinChars: 4,
+          },
+        );
+
+        // Event Listener: Cursor Position
+        editor.onDidChangeCursorPosition((e) => {
+          document.getElementById("cursorLn").innerText = e.position.lineNumber;
+          document.getElementById("cursorCol").innerText = e.position.column;
+        });
+
+        // Event Listener: Content Changed (Unsaved indicator)
+        editor.onDidChangeModelContent(() => {
+          // document.getElementById('unsavedDot').style.display = 'block';
+        });
+
+        // Keyboard Shortcut: Ctrl + S (Save)
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+          saveFile();
+        });
+
+        // Keyboard Shortcut: Ctrl + P (Format) - Using P for Prettier (or Alt+Shift+F default)
+        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP, () => {
+          formatCode();
+        });
+
+        // Setup Complete
+        document.getElementById("global-loader").style.display = "none";
+        loadFiles();
+      });
+
+      /* --- FILE SYSTEM LOGIC --- */
       async function loadFiles() {
-        showLoader(true, "FETCHING FILES...");
         try {
           const res = await fetch("/api/files", {
             method: "POST",
@@ -223,41 +441,62 @@
             body: JSON.stringify({ repoName }),
           });
           const data = await res.json();
-
           const list = document.getElementById("fileList");
           list.innerHTML = "";
 
           if (data.success) {
+            // Sort: index.html first, then others
+            data.files.sort((a, b) => (a.name === "index.html" ? -1 : 1));
+
             data.files.forEach((file) => {
               const div = document.createElement("div");
               div.className = "file-item";
-              div.innerHTML = `<i class="ri-file-code-line"></i> ${file.name}`;
+              // Icon based on extension
+              let icon = "ri-file-line";
+              if (file.name.endsWith(".html")) icon = "ri-html5-line";
+              if (file.name.endsWith(".css")) icon = "ri-css3-line";
+              if (file.name.endsWith(".js")) icon = "ri-javascript-line";
+              if (file.name.endsWith(".json")) icon = "ri-braces-line";
+
+              div.innerHTML = `<i class="${icon}"></i> ${file.name}`;
               div.onclick = () => loadContent(file.path, div);
               list.appendChild(div);
             });
 
-            // Auto load index.html if exists
-            const indexFile = data.files.find((f) => f.name === "index.html");
-            if (indexFile) {
-              // Trigger click manually later or handle logic
+            // Auto open index.html if exists
+            const idx = data.files.find((f) => f.name === "index.html");
+            if (idx) {
+              const items = document.querySelectorAll(".file-item");
+              if (items.length > 0) items[0].click(); // Click first item
             }
           }
         } catch (e) {
-          alert("Error loading files");
+          showToast("Failed to load file list", "error");
         }
-        showLoader(false);
       }
 
-      // 2. LOAD FILE CONTENT
       async function loadContent(path, element) {
-        // Highlight active sidebar
+        // UI Updates
         document
           .querySelectorAll(".file-item")
           .forEach((el) => el.classList.remove("active"));
-        element.classList.add("active");
+        if (element) element.classList.add("active");
 
-        showLoader(true, "READING...");
+        document.getElementById("currentFileName").innerText = path;
+
+        // Detect Language for Monaco
+        let lang = "plaintext";
+        if (path.endsWith(".html")) lang = "html";
+        if (path.endsWith(".css")) lang = "css";
+        if (path.endsWith(".js")) lang = "javascript";
+        if (path.endsWith(".json")) lang = "json";
+
+        document.getElementById("langDisplay").innerText = lang.toUpperCase();
+        monaco.editor.setModelLanguage(editor.getModel(), lang);
+
+        // Fetch Content
         try {
+          // Small overlay loader on editor only? For now global toast
           const res = await fetch("/api/read", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -266,24 +505,69 @@
           const data = await res.json();
 
           if (data.success) {
-            document.getElementById("codeArea").value = data.content;
-            document.getElementById("codeArea").disabled = false;
-            document.getElementById("currentFile").innerText = path;
+            editor.setValue(data.content);
             currentSha = data.sha;
             currentPath = path;
+          } else {
+            showToast("Error reading file", "error");
           }
         } catch (e) {
-          alert("Error reading file");
+          showToast("Connection error", "error");
         }
-        showLoader(false);
       }
 
-      // 3. SAVE & DEPLOY
-      async function saveFile() {
-        if (!currentPath) return alert("No file selected!");
+      /* --- PRETTIER FORMATTING --- */
+      function formatCode() {
+        if (!currentPath) return;
+        const code = editor.getValue();
+        let parser = null;
+        let plugins = [];
 
-        showLoader(true, "SAVING & REDEPLOYING...");
-        const content = document.getElementById("codeArea").value;
+        if (currentPath.endsWith(".html")) {
+          parser = "html";
+          plugins = prettierPlugins;
+        } else if (currentPath.endsWith(".css")) {
+          parser = "css";
+          plugins = prettierPlugins;
+        } else if (currentPath.endsWith(".js")) {
+          parser = "babel";
+          plugins = prettierPlugins;
+        } else if (currentPath.endsWith(".json")) {
+          parser = "json";
+          plugins = prettierPlugins;
+        }
+
+        if (!parser) {
+          showToast("Auto-format not supported for this file type.", "error");
+          return;
+        }
+
+        try {
+          const formatted = prettier.format(code, {
+            parser: parser,
+            plugins: plugins,
+            tabWidth: 2,
+            printWidth: 80,
+          });
+
+          // Apply to editor while keeping cursor pos (simple method)
+          const pos = editor.getPosition();
+          editor.setValue(formatted);
+          editor.setPosition(pos);
+
+          showToast("Code formatted!", "success");
+        } catch (e) {
+          console.error(e);
+          showToast("Syntax Error! Fix code before formatting.", "error");
+        }
+      }
+
+      /* --- SAVE LOGIC --- */
+      async function saveFile() {
+        if (!currentPath) return showToast("No file selected", "error");
+
+        const content = editor.getValue();
+        showToast("Saving...", "info"); // Info toast (blue)
 
         try {
           const res = await fetch("/api/save", {
@@ -299,31 +583,54 @@
           const data = await res.json();
 
           if (data.success) {
-            alert(
-              "✅ File Saved! Cloudflare is rebuilding your site.\nWait ~30 seconds and refresh the Live Site.",
-            );
-            // Reload content to get new SHA
-            loadContent(
-              currentPath,
-              document.querySelector(".file-item.active"),
-            );
+            showToast("Saved & Deploying...", "success");
+            // Refresh SHA
+            // Usually we need to re-fetch SHA, but for continuous edit,
+            // if we just pushed, GitHub updates SHA.
+            // Ideally we re-read file, but to keep it fast let's just assume success.
+            // A robust app would re-fetch the sha.
+
+            // Re-fetch to update SHA silently
+            fetchSHA(currentPath);
           } else {
-            alert("Failed to save.");
+            showToast("Save Failed!", "error");
           }
         } catch (e) {
-          alert("Error saving file");
+          showToast("Network Error", "error");
         }
-        showLoader(false);
       }
 
-      function showLoader(show, text) {
-        const l = document.getElementById("loader");
-        l.style.display = show ? "flex" : "none";
-        if (text) document.getElementById("loaderText").innerText = text;
+      async function fetchSHA(path) {
+        // Background sync to get new SHA
+        try {
+          const res = await fetch("/api/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ repoName, filePath: path }),
+          });
+          const data = await res.json();
+          if (data.success) currentSha = data.sha;
+        } catch (e) {}
       }
 
-      // Init
-      loadFiles();
+      /* --- TOAST SYSTEM --- */
+      function showToast(msg, type = "success") {
+        const container = document.getElementById("toastContainer");
+        const div = document.createElement("div");
+        div.className = `toast ${type}`;
+
+        let icon = "ri-check-line";
+        if (type === "error") icon = "ri-error-warning-line";
+        if (type === "info") icon = "ri-loader-4-line";
+
+        div.innerHTML = `<i class="${icon}"></i> ${msg}`;
+        container.appendChild(div);
+
+        setTimeout(() => {
+          div.style.animation = "fadeOut 0.5s forwards";
+          setTimeout(() => div.remove(), 500);
+        }, 3000);
+      }
     </script>
   </body>
 </html>
