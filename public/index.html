@@ -304,9 +304,8 @@
         pointer-events: auto;
       }
 
-      /* AUTH USER PROFILE IN NAV */
       .user-badge {
-        display: none; /* Hidden by default */
+        display: none;
         align-items: center;
         gap: 10px;
         pointer-events: auto;
@@ -405,7 +404,7 @@
         margin-bottom: 40px;
       }
 
-      /* HUD */
+      /* HUD & TABS */
       .hud-glass {
         background: rgba(10, 10, 15, 0.4);
         backdrop-filter: blur(20px);
@@ -418,8 +417,6 @@
         pointer-events: auto;
         min-height: 500px;
       }
-
-      /* --- NEW STYLES: TABS --- */
       .hud-tabs {
         display: flex;
         border-bottom: 1px solid #333;
@@ -459,7 +456,7 @@
         }
       }
 
-      /* --- NEW STYLES: HISTORY LIST --- */
+      /* HISTORY & FORM */
       .history-list {
         display: flex;
         flex-direction: column;
@@ -603,28 +600,31 @@
         color: var(--neon-green);
       }
 
-      /* AUTH WALL STYLES */
+      /* --- AUTH WALL STYLES (UPDATED) --- */
       .auth-wall {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 20px;
+        gap: 15px;
         padding: 40px 0;
         text-align: center;
         border: 1px solid var(--neon-blue);
         background: rgba(0, 243, 255, 0.02);
       }
+
       .btn-google {
         background: transparent;
         border: 1px solid var(--neon-blue);
         color: var(--neon-blue);
-        padding: 15px 30px;
+        padding: 12px 30px;
+        width: 250px;
         font-family: "Rajdhani";
         font-weight: 700;
-        font-size: 1.1rem;
+        font-size: 1rem;
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 10px;
         transition: 0.3s;
         cursor: pointer;
@@ -633,6 +633,28 @@
         background: var(--neon-blue);
         color: #000;
         box-shadow: 0 0 20px var(--neon-blue);
+      }
+
+      .btn-github {
+        background: transparent;
+        border: 1px solid #fff;
+        color: #fff;
+        padding: 12px 30px;
+        width: 250px;
+        font-family: "Rajdhani";
+        font-weight: 700;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: 0.3s;
+        cursor: pointer;
+      }
+      .btn-github:hover {
+        background: #fff;
+        color: #000;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
       }
 
       /* ID */
@@ -799,7 +821,6 @@
 
     <div class="gate-top" id="gateTop"></div>
     <div class="gate-bottom" id="gateBottom"></div>
-
     <div class="noise-layer"></div>
     <canvas id="vortex-canvas"></canvas>
     <div class="cursor-dot"></div>
@@ -807,12 +828,10 @@
 
     <nav>
       <div class="logo hover-trigger">HAWAI</div>
-
       <div class="user-badge" id="userBadge">
         <img src="" class="user-avatar" id="navAvatar" />
         <span class="user-name" id="navName">COMMANDER</span>
       </div>
-
       <a href="#identity" class="menu-link hover-trigger">// IDENTITY_CORE</a>
     </nav>
 
@@ -913,8 +932,12 @@
                 >
                   AUTHENTICATION REQUIRED TO DEPLOY
                 </div>
+
                 <button class="btn-google hover-trigger" id="btnLogin">
                   <i class="ri-google-fill"></i> LOGIN WITH GOOGLE
+                </button>
+                <button class="btn-github hover-trigger" id="btnLoginGithub">
+                  <i class="ri-github-fill"></i> LOGIN WITH GITHUB
                 </button>
               </div>
 
@@ -1072,6 +1095,7 @@
       import {
         getAuth,
         GoogleAuthProvider,
+        GithubAuthProvider,
         signInWithPopup,
         onAuthStateChanged,
       } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -1085,25 +1109,29 @@
         orderBy,
       } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-      // --- FIREBASE CONFIGURATION (ISI PUNYA KAMU DI SINI) ---
+      // --- FIREBASE CONFIGURATION (PASTIKAN INI SAMA DENGAN YG SEBELUMNYA) ---
       const firebaseConfig = {
-        apiKey: "AIzaSyBpuG8C9_RBXo7OmAXCmxYGZgZ9MoWOmeo",
-        authDomain: "projek-abs.firebaseapp.com",
-        projectId: "projek-abs",
-        storageBucket: "projek-abs.firebasestorage.app",
-        messagingSenderId: "266262062550",
-        appId: "1:266262062550:web:4107f0f2123f5864077077",
+        apiKey: "AIzaSyB7fujDTKuQieZ-_DP3-Kf__z3L0DsJATU",
+        authDomain: "hawai-46102.firebaseapp.com",
+        projectId: "hawai-46102",
+        storageBucket: "hawai-46102.firebasestorage.app",
+        messagingSenderId: "508538023984",
+        appId: "1:508538023984:web:e8adb5d6da7cc41e3c7df5",
       };
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const db = getFirestore(app);
-      const provider = new GoogleAuthProvider();
+
+      // Providers
+      const googleProvider = new GoogleAuthProvider();
+      const githubProvider = new GithubAuthProvider();
 
       let currentUser = null;
       let currentUserEmail = "";
 
       const btnLogin = document.getElementById("btnLogin");
+      const btnLoginGithub = document.getElementById("btnLoginGithub");
       const authWall = document.getElementById("authWall");
       const deployForm = document.getElementById("deployForm");
       const userBadge = document.getElementById("userBadge");
@@ -1111,39 +1139,42 @@
       const navName = document.getElementById("navName");
       const historyList = document.getElementById("historyList");
 
-      // LOGIN HANDLER
+      // GOOGLE LOGIN
       btnLogin.addEventListener("click", () => {
-        signInWithPopup(auth, provider)
-          .then((result) => {
-            console.log("Logged in:", result.user);
-          })
+        signInWithPopup(auth, googleProvider)
+          .then((result) => console.log("Logged in with Google"))
+          .catch((error) => alert("Login Failed: " + error.message));
+      });
+
+      // GITHUB LOGIN
+      btnLoginGithub.addEventListener("click", () => {
+        signInWithPopup(auth, githubProvider)
+          .then((result) => console.log("Logged in with GitHub"))
           .catch((error) => {
             console.error(error);
-            alert("Login Failed: " + error.message);
+            alert(
+              "Login Failed. Pastikan sudah setting GitHub App di Firebase Console.",
+            );
           });
       });
 
-      // AUTH STATE LISTENER
+      // AUTH LISTENER
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          // USER LOGIN
           currentUser = user;
           currentUserEmail = user.email;
           authWall.style.display = "none";
           deployForm.style.display = "block";
 
-          // Update UI
           userBadge.style.display = "flex";
-          navAvatar.src = user.photoURL;
-          navName.innerText = user.displayName.split(" ")[0].toUpperCase();
+          navAvatar.src = user.photoURL || "../logo.png"; // Fallback if no photo
+          navName.innerText = (user.displayName || user.email)
+            .split(" ")[0]
+            .toUpperCase();
 
-          // Animasi Form Muncul
           gsap.from("#deployForm", { opacity: 0, y: 20, duration: 0.5 });
-
-          // Load User History
           loadUserHistory(user.email);
         } else {
-          // USER LOGOUT
           currentUser = null;
           currentUserEmail = "";
           authWall.style.display = "flex";
@@ -1153,7 +1184,7 @@
         }
       });
 
-      // --- FIRESTORE: LOAD HISTORY ---
+      // LOAD HISTORY
       async function loadUserHistory(email) {
         historyList.innerHTML = `<div style="text-align: center; color: var(--neon-blue);">Fetching Data...</div>`;
         try {
@@ -1164,7 +1195,7 @@
           );
 
           const querySnapshot = await getDocs(q);
-          historyList.innerHTML = ""; // Clear loader
+          historyList.innerHTML = "";
 
           if (querySnapshot.empty) {
             historyList.innerHTML = `<div style="text-align: center; color: #444; margin-top: 20px;">No deployments yet.</div>`;
@@ -1177,13 +1208,12 @@
               ? new Date(data.createdAt.seconds * 1000).toLocaleDateString()
               : "-";
 
-            // Create Card HTML
             const item = document.createElement("div");
             item.className = "history-item";
             item.innerHTML = `
               <div class="h-info">
                 <div class="h-name">${data.projectName}</div>
-                <div class="h-date">${date} • ${data.repoName || "Unknown Repo"}</div>
+                <div class="h-date">${date} • ${data.repoName || "Unknown"}</div>
               </div>
               <div class="h-actions">
                 <a href="${data.url}" target="_blank" class="btn-mini">VISIT</a>
@@ -1198,7 +1228,7 @@
         }
       }
 
-      // --- FORM SUBMIT HANDLER ---
+      // DEPLOY LOGIC
       const deployFormEl = document.getElementById("deployForm");
       const fileInputEl = document.getElementById("pFile");
       const dropAreaEl = document.getElementById("dropArea");
@@ -1216,17 +1246,13 @@
 
       deployFormEl.addEventListener("submit", async (e) => {
         e.preventDefault();
-
-        // Show Loading
         document.getElementById("loadingOverlay").style.display = "flex";
-        await new Promise((r) => setTimeout(r, 4000)); // Delay effect
+        await new Promise((r) => setTimeout(r, 4000));
 
         const formData = new FormData();
         formData.append("projectName", document.getElementById("pName").value);
         formData.append("file", fileInputEl.files[0]);
-        if (currentUserEmail) {
-          formData.append("userEmail", currentUserEmail);
-        }
+        if (currentUserEmail) formData.append("userEmail", currentUserEmail);
 
         try {
           const res = await fetch("/deploy", {
@@ -1238,7 +1264,6 @@
           document.getElementById("loadingOverlay").style.display = "none";
 
           if (data.success) {
-            // --- SAVE TO FIRESTORE ---
             try {
               await addDoc(collection(db, "deployments"), {
                 userEmail: currentUserEmail,
@@ -1247,13 +1272,11 @@
                 url: data.url,
                 createdAt: new Date(),
               });
-              // Refresh History
               loadUserHistory(currentUserEmail);
             } catch (err) {
               console.error("Failed to save history", err);
             }
 
-            // Success UI
             document.getElementById("deployForm").style.display = "none";
             document.getElementById("resultBox").style.display = "block";
             confetti({
@@ -1261,7 +1284,6 @@
               spread: 150,
               colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
             });
-
             const finalLink = document.getElementById("resultLink");
             finalLink.href = `/status.html?url=${data.url}&repo=${data.repo}`;
           } else {
@@ -1270,12 +1292,10 @@
           }
         } catch (err) {
           alert("CONNECTION ERROR");
-          console.error(err);
           location.reload();
         }
       });
 
-      // --- EXPORT VARIABLE FOR DEPLOY SCRIPT ---
       window.getUserEmail = () => currentUserEmail;
     </script>
 
@@ -1341,7 +1361,6 @@
         },
       };
 
-      /* --- BOOT SEQUENCE --- */
       const enterBtn = document.getElementById("enterBtn");
       const bootText = document.getElementById("bootText");
       setTimeout(() => {
@@ -1406,7 +1425,26 @@
         });
       });
 
-      /* --- VORTEX --- */
+      /* --- TAB SWITCHER --- */
+      window.switchTab = (tab) => {
+        document
+          .querySelectorAll(".hud-tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".panel")
+          .forEach((p) => p.classList.remove("active"));
+
+        if (tab === "deploy") {
+          document.querySelectorAll(".hud-tab")[0].classList.add("active");
+          document.getElementById("panel-deploy").classList.add("active");
+        } else {
+          document.querySelectorAll(".hud-tab")[1].classList.add("active");
+          document.getElementById("panel-history").classList.add("active");
+        }
+        SoundFX.click();
+      };
+
+      /* --- CANVAS --- */
       const canvas = document.getElementById("vortex-canvas"),
         ctx = canvas.getContext("2d");
       let width,
@@ -1479,7 +1517,7 @@
       }
       animate();
 
-      /* --- INTERACTIONS --- */
+      /* --- CURSOR --- */
       const cursorDot = document.querySelector(".cursor-dot"),
         cursorCircle = document.querySelector(".cursor-circle");
       document.addEventListener("mousemove", (e) => {
@@ -1502,25 +1540,6 @@
           );
           e.addEventListener("click", () => SoundFX.click());
         });
-
-      /* --- TAB SWITCHER LOGIC --- */
-      window.switchTab = (tab) => {
-        document
-          .querySelectorAll(".hud-tab")
-          .forEach((t) => t.classList.remove("active"));
-        document
-          .querySelectorAll(".panel")
-          .forEach((p) => p.classList.remove("active"));
-
-        if (tab === "deploy") {
-          document.querySelectorAll(".hud-tab")[0].classList.add("active");
-          document.getElementById("panel-deploy").classList.add("active");
-        } else {
-          document.querySelectorAll(".hud-tab")[1].classList.add("active");
-          document.getElementById("panel-history").classList.add("active");
-        }
-        SoundFX.click();
-      };
 
       gsap.registerPlugin(ScrollTrigger);
       gsap.from(".bio-wrapper > *", {
