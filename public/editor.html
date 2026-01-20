@@ -3,11 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Hawai IDE | Live</title>
+    <title>Hawai IDE | Pro</title>
     <link rel="icon" type="image/png" href="/logo.png" />
-    
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
 
     <script src="https://unpkg.com/prettier@2.8.8/standalone.js"></script>
     <script src="https://unpkg.com/prettier@2.8.8/parser-html.js"></script>
@@ -29,112 +35,301 @@
         --hover-bg: rgba(0, 243, 255, 0.05);
       }
 
-      * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        outline: none;
+      }
       body {
-        background: var(--bg); color: var(--text);
+        background: var(--bg);
+        color: var(--text);
         font-family: "JetBrains Mono", monospace;
-        height: 100vh; display: flex; overflow: hidden;
+        height: 100vh;
+        display: flex;
+        overflow: hidden;
       }
 
       /* SIDEBAR */
       .sidebar {
-        width: 260px; background: var(--sidebar);
+        width: 260px;
+        background: var(--sidebar);
         border-right: 1px solid var(--sidebar-border);
-        display: flex; flex-direction: column; user-select: none; flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        user-select: none;
+        flex-shrink: 0;
       }
       .sidebar-header {
-        padding: 20px; font-family: "Rajdhani"; font-size: 1.2rem;
-        color: var(--neon); letter-spacing: 1px; border-bottom: 1px solid var(--sidebar-border);
+        padding: 20px;
+        font-family: "Rajdhani";
+        font-size: 1.2rem;
+        color: var(--neon);
+        letter-spacing: 1px;
+        border-bottom: 1px solid var(--sidebar-border);
       }
-      .file-list { flex: 1; padding: 10px 0; overflow-y: auto; }
+      .file-list {
+        flex: 1;
+        padding: 10px 0;
+        overflow-y: auto;
+      }
       .file-item {
-        padding: 8px 20px; cursor: pointer; transition: 0.2s;
-        display: flex; align-items: center; gap: 10px; font-size: 0.9rem;
+        padding: 8px 20px;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
         border-left: 2px solid transparent;
       }
-      .file-item:hover { background: var(--hover-bg); color: var(--text-active); }
-      .file-item.active { background: rgba(0, 243, 255, 0.1); color: var(--neon); border-left: 2px solid var(--neon); }
-      .sidebar-footer { padding: 15px; border-top: 1px solid var(--sidebar-border); }
+      .file-item:hover {
+        background: var(--hover-bg);
+        color: var(--text-active);
+      }
+      .file-item.active {
+        background: rgba(0, 243, 255, 0.1);
+        color: var(--neon);
+        border-left: 2px solid var(--neon);
+      }
+      .sidebar-footer {
+        padding: 15px;
+        border-top: 1px solid var(--sidebar-border);
+      }
 
       /* MAIN LAYOUT */
-      .main-editor { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-      
+      .main-editor {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+      }
+
       .editor-toolbar {
-        height: 50px; background: #08080a; border-bottom: 1px solid var(--sidebar-border);
-        display: flex; justify-content: space-between; align-items: center; padding: 0 20px; flex-shrink: 0;
+        height: 50px;
+        background: #08080a;
+        border-bottom: 1px solid var(--sidebar-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        flex-shrink: 0;
       }
-      .tab-name { font-size: 0.9rem; color: var(--text-active); display: flex; align-items: center; gap: 8px; }
-      
-      .toolbar-actions { display: flex; gap: 10px; }
+      .tab-name {
+        font-size: 0.9rem;
+        color: var(--text-active);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: 10px;
+      }
       .btn {
-        background: transparent; border: 1px solid #333; color: var(--text);
-        padding: 6px 14px; font-family: "Rajdhani"; font-size: 0.85rem; font-weight: 600;
-        cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s;
-        text-decoration: none; border-radius: 4px;
+        background: transparent;
+        border: 1px solid #333;
+        color: var(--text);
+        padding: 6px 14px;
+        font-family: "Rajdhani";
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: 0.2s;
+        text-decoration: none;
+        border-radius: 4px;
       }
-      .btn:hover { border-color: var(--neon); color: var(--neon); background: rgba(0, 243, 255, 0.05); }
-      .btn-primary { background: var(--neon); color: #000; border: none; }
-      .btn-primary:hover { background: #00c4cf; box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); color: black; }
-      .btn-active { background: rgba(0, 243, 255, 0.2); color: var(--neon); border-color: var(--neon); }
+      .btn:hover {
+        border-color: var(--neon);
+        color: var(--neon);
+        background: rgba(0, 243, 255, 0.05);
+      }
+      .btn-primary {
+        background: var(--neon);
+        color: #000;
+        border: none;
+      }
+      .btn-primary:hover {
+        background: #00c4cf;
+        box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        color: black;
+      }
+      .btn-active {
+        background: rgba(0, 243, 255, 0.2);
+        color: var(--neon);
+        border-color: var(--neon);
+      }
 
       /* SPLIT VIEW */
-      .workspace { flex: 1; display: flex; position: relative; overflow: hidden; }
-      
-      #monaco-container { flex: 1; height: 100%; transition: width 0.3s; }
-      
+      .workspace {
+        flex: 1;
+        display: flex;
+        position: relative;
+        overflow: hidden;
+      }
+
+      #monaco-container {
+        flex: 1;
+        height: 100%;
+        transition: width 0.3s;
+      }
+
       #preview-container {
-        width: 0; height: 100%; border-left: 1px solid var(--sidebar-border);
-        background: white; transition: width 0.3s; display: flex; flex-direction: column;
+        width: 0;
+        height: 100%;
+        border-left: 1px solid var(--sidebar-border);
+        background: white;
+        transition: width 0.3s;
+        display: flex;
+        flex-direction: column;
       }
-      #preview-container.open { width: 50%; } /* Default split 50/50 */
-      
+      #preview-container.open {
+        width: 50%;
+      } /* Default split 50/50 */
+
       .preview-header {
-        height: 30px; background: #eee; color: #333; display: flex; align-items: center; 
-        padding: 0 10px; font-size: 0.75rem; justify-content: space-between; border-bottom: 1px solid #ccc;
+        height: 30px;
+        background: #f0f0f0;
+        color: #333;
+        display: flex;
+        align-items: center;
+        padding: 0 15px;
+        font-size: 0.75rem;
+        justify-content: space-between;
+        border-bottom: 1px solid #ccc;
+        font-family: sans-serif;
+        font-weight: bold;
       }
-      iframe { width: 100%; height: 100%; border: none; background: white; }
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: white;
+      }
 
       /* STATUS BAR */
       .status-bar {
-        height: 25px; background: var(--sidebar); border-top: 1px solid var(--sidebar-border);
-        display: flex; align-items: center; justify-content: space-between; padding: 0 15px;
-        font-size: 0.75rem; color: #555; flex-shrink: 0;
+        height: 25px;
+        background: var(--sidebar);
+        border-top: 1px solid var(--sidebar-border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+        font-size: 0.75rem;
+        color: #555;
+        flex-shrink: 0;
       }
-      .status-group { display: flex; gap: 15px; }
-      .status-val { color: var(--neon); }
+      .status-group {
+        display: flex;
+        gap: 15px;
+      }
+      .status-val {
+        color: var(--neon);
+      }
 
       /* TOAST */
-      .toast-container { position: fixed; bottom: 40px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+      .toast-container {
+        position: fixed;
+        bottom: 40px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 9999;
+      }
       .toast {
-        background: rgba(10, 15, 20, 0.95); border: 1px solid #333; border-left: 3px solid var(--neon);
-        color: white; padding: 12px 20px; border-radius: 4px; font-size: 0.9rem;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 10px;
+        background: rgba(10, 15, 20, 0.95);
+        border: 1px solid #333;
+        border-left: 3px solid var(--neon);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        gap: 10px;
         animation: slideIn 0.3s ease-out forwards;
       }
-      .toast.success { border-left-color: var(--neon-green); }
-      .toast.error { border-left-color: #ff3333; }
-      @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
-      @keyframes fadeOut { to { opacity: 0; transform: translateY(10px); } }
+      .toast.success {
+        border-left-color: var(--neon-green);
+      }
+      .toast.error {
+        border-left-color: #ff3333;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+      @keyframes fadeOut {
+        to {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+      }
 
       /* LOADER */
-      #global-loader { position: fixed; inset: 0; background: #020204; z-index: 10000; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
-      .spinner { width: 40px; height: 40px; border: 2px solid #333; border-top-color: var(--neon); border-radius: 50%; animation: spin 0.8s linear infinite; }
-      @keyframes spin { to { transform: rotate(360deg); } }
+      #global-loader {
+        position: fixed;
+        inset: 0;
+        background: #020204;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+      }
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 2px solid #333;
+        border-top-color: var(--neon);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
     </style>
   </head>
   <body>
     <div id="global-loader">
       <div class="spinner"></div>
-      <div style="font-family: 'Rajdhani'; color: #666; letter-spacing: 2px;">LOADING IDE...</div>
+      <div
+        style="
+          font-family: &quot;Rajdhani&quot;;
+          color: #666;
+          letter-spacing: 2px;
+        "
+      >
+        LOADING IDE...
+      </div>
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="sidebar">
-      <div class="sidebar-header"><i class="ri-code-s-slash-line" style="font-size: 1.5rem"></i> HAWAI PRO</div>
+      <div class="sidebar-header">
+        <i class="ri-code-s-slash-line" style="font-size: 1.5rem"></i> HAWAI PRO
+      </div>
       <div class="file-list" id="fileList"></div>
       <div class="sidebar-footer">
-        <a href="/" class="btn" style="width: 100%; justify-content: center"><i class="ri-arrow-left-line"></i> BACK TO DASHBOARD</a>
+        <a href="/" class="btn" style="width: 100%; justify-content: center"
+          ><i class="ri-arrow-left-line"></i> BACK TO DASHBOARD</a
+        >
       </div>
     </div>
 
@@ -148,7 +343,7 @@
           <button class="btn" id="btnPreview" onclick="togglePreview()">
             <i class="ri-layout-column-line"></i> LIVE PREVIEW
           </button>
-          
+
           <button class="btn" onclick="formatCode()">
             <i class="ri-brush-line"></i> FORMAT
           </button>
@@ -157,175 +352,233 @@
           </button>
         </div>
       </div>
-      
+
       <div class="workspace">
         <div id="monaco-container"></div>
-        
+
         <div id="preview-container">
           <div class="preview-header">
-            <span><i class="ri-eye-line"></i> Live Simulation (HTML + CSS + JS)</span>
-            <span id="previewStatus" style="color: var(--neon-green); font-size: 0.7rem;">● Connected</span>
+            <span style="display: flex; align-items: center; gap: 5px"
+              ><i class="ri-eye-line"></i> SIMULATOR</span
+            >
+            <button
+              class="btn"
+              style="padding: 2px 8px; font-size: 0.7rem; border: none"
+              onclick="refreshPreview()"
+            >
+              <i class="ri-refresh-line"></i> REFRESH
+            </button>
           </div>
-          <iframe id="previewFrame"></iframe>
+          <iframe
+            id="previewFrame"
+            sandbox="allow-scripts allow-same-origin"
+          ></iframe>
         </div>
       </div>
 
       <div class="status-bar">
         <div class="status-group">
           <span id="langDisplay">TXT</span>
-          <span>Ln <span class="status-val" id="cursorLn">1</span>, Col <span class="status-val" id="cursorCol">1</span></span>
+          <span
+            >Ln <span class="status-val" id="cursorLn">1</span>, Col
+            <span class="status-val" id="cursorCol">1</span></span
+          >
         </div>
         <div class="status-group">
-          <span id="liveUrlDisplay" style="color: #666; font-size: 0.7rem;"></span>
+          <span id="previewStatus">Realtime OFF</span>
         </div>
       </div>
     </div>
 
     <script>
       /* --- GLOBAL VARIABLES --- */
-      let editor; 
+      let editor;
       let currentSha = "";
       let currentPath = "";
       let isPreviewOpen = false;
-      let fileCache = {}; // Local memory storage for files
-      
+
+      // PROJECT FILE CACHE (PENTING UNTUK PREVIEW)
+      // Kita menyimpan isi semua file di sini agar preview bisa menggabungkan HTML+CSS+JS
+      const projectFiles = {};
+
       const params = new URLSearchParams(window.location.search);
       const repoName = params.get("repo");
-      const liveUrl = params.get("url"); 
-      
-      if (!repoName) { alert("Repo not found"); window.location.href="/"; }
-      document.getElementById("liveUrlDisplay").innerText = liveUrl || "Live URL Unknown";
+
+      if (!repoName) {
+        alert("Repo not found");
+        window.location.href = "/";
+      }
 
       /* --- INITIALIZE MONACO --- */
-      require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
-      
-      require(['vs/editor/editor.main'], function() {
-        monaco.editor.defineTheme('hawai-dark', {
-          base: 'vs-dark',
+      require.config({
+        paths: {
+          vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs",
+        },
+      });
+
+      require(["vs/editor/editor.main"], function () {
+        monaco.editor.defineTheme("hawai-dark", {
+          base: "vs-dark",
           inherit: true,
-          rules: [{ background: '020204' }],
+          rules: [{ background: "020204" }],
           colors: {
-            'editor.background': '#020204',
-            'editor.lineHighlightBackground': '#111111',
-            'editorLineNumber.foreground': '#444444',
-            'editor.selectionBackground': '#00f3ff20',
+            "editor.background": "#020204",
+            "editor.lineHighlightBackground": "#111111",
+            "editorLineNumber.foreground": "#444444",
+            "editor.selectionBackground": "#00f3ff20",
+          },
+        });
+
+        editor = monaco.editor.create(
+          document.getElementById("monaco-container"),
+          {
+            value: "// Select a file to edit...",
+            language: "javascript",
+            theme: "hawai-dark",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 14,
+            minimap: { enabled: false },
+            automaticLayout: true,
+            padding: { top: 20 },
+            lineNumbersMinChars: 3,
+          },
+        );
+
+        // LIVE UPDATE LISTENER
+        editor.onDidChangeModelContent(() => {
+          if (currentPath) {
+            // Update cache memory saat mengetik
+            projectFiles[currentPath].content = editor.getValue();
+            if (isPreviewOpen) updatePreviewContent();
           }
         });
 
-        editor = monaco.editor.create(document.getElementById('monaco-container'), {
-          value: "// Select a file to edit...",
-          language: 'javascript',
-          theme: 'hawai-dark',
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 14,
-          minimap: { enabled: false },
-          automaticLayout: true,
-          padding: { top: 20 },
-          lineNumbersMinChars: 3
-        });
-
-        // REALTIME PREVIEW LISTENER
-        editor.onDidChangeModelContent(() => {
-          // Update cache immediately for the current file
-          if (currentPath) fileCache[currentPath] = editor.getValue();
-          // Update preview
-          if (isPreviewOpen) updatePreviewContent();
-        });
-
+        // CURSOR POSITION
         editor.onDidChangeCursorPosition((e) => {
-          document.getElementById('cursorLn').innerText = e.position.lineNumber;
-          document.getElementById('cursorCol').innerText = e.position.column;
+          document.getElementById("cursorLn").innerText = e.position.lineNumber;
+          document.getElementById("cursorCol").innerText = e.position.column;
         });
 
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, saveFile);
-        editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP, formatCode);
+        // SHORTCUTS
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
+          saveFile,
+        );
+        editor.addCommand(
+          monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP,
+          formatCode,
+        );
 
-        document.getElementById('global-loader').style.display = 'none';
-        
-        // Load files and pre-fetch essentials
-        loadFilesAndCache();
+        document.getElementById("global-loader").style.display = "none";
+        loadFiles();
       });
 
-      /* --- PREVIEW LOGIC (THE MAGIC) --- */
+      /* --- CORE PREVIEW LOGIC (THE FIX) --- */
       function togglePreview() {
         const pContainer = document.getElementById("preview-container");
         const btn = document.getElementById("btnPreview");
-        
+        const status = document.getElementById("previewStatus");
+
         isPreviewOpen = !isPreviewOpen;
-        
+
         if (isPreviewOpen) {
           pContainer.classList.add("open");
           btn.classList.add("btn-active");
-          updatePreviewContent();
+          status.innerText = "Realtime ON";
+          status.style.color = "var(--neon-green)";
+          refreshPreview(); // Full Build
         } else {
           pContainer.classList.remove("open");
           btn.classList.remove("btn-active");
+          status.innerText = "Realtime OFF";
+          status.style.color = "#555";
         }
+
         setTimeout(() => editor.layout(), 350);
       }
 
-      function updatePreviewContent() {
-        if (!isPreviewOpen) return;
-
-        // 1. Get Main HTML (Prefer cached index.html)
-        // If we are editing index.html, fileCache is already updated by 'onDidChangeModelContent'
-        let htmlContent = fileCache['index.html'];
-
-        if (!htmlContent) {
-            // If index.html is not loaded yet, we can't render anything useful
-            const frame = document.getElementById("previewFrame");
-            frame.srcdoc = `<div style="color:#888; font-family:monospace; padding:20px; text-align:center;">Loading index.html for preview...</div>`;
-            return;
-        }
-
-        // 2. Parse HTML to inject local CSS/JS
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, "text/html");
-
-        // 3. Inject BASE URL for Images/Assets
-        if (liveUrl) {
-            const base = doc.createElement("base");
-            base.href = liveUrl.endsWith("/") ? liveUrl : liveUrl + "/";
-            doc.head.prepend(base);
-        }
-
-        // 4. INJECT CSS (Replace <link> with <style>)
-        const links = Array.from(doc.querySelectorAll("link[rel='stylesheet']"));
-        links.forEach(link => {
-            const href = link.getAttribute("href");
-            if(href) {
-                const cleanHref = href.replace(/^(\.\/|\/)/, ""); // Clean path
-                const cssContent = fileCache[cleanHref];
-                if(cssContent) {
-                    const style = doc.createElement("style");
-                    style.textContent = cssContent;
-                    link.replaceWith(style);
-                }
-            }
-        });
-
-        // 5. INJECT JS (Replace <script src> with <script>content</script>)
-        const scripts = Array.from(doc.querySelectorAll("script[src]"));
-        scripts.forEach(script => {
-            const src = script.getAttribute("src");
-            if(src) {
-                const cleanSrc = src.replace(/^(\.\/|\/)/, "");
-                const jsContent = fileCache[cleanSrc];
-                if(jsContent) {
-                    const newScript = doc.createElement("script");
-                    newScript.textContent = jsContent;
-                    script.replaceWith(newScript);
-                }
-            }
-        });
-
-        // 6. RENDER TO IFRAME
-        const frame = document.getElementById("previewFrame");
-        frame.srcdoc = doc.documentElement.outerHTML;
+      function refreshPreview() {
+        updatePreviewContent();
       }
 
-      /* --- FILE SYSTEM & CACHING --- */
-      async function loadFilesAndCache() {
+      function updatePreviewContent() {
+        const frame = document.getElementById("previewFrame");
+
+        // Cari file index.html atau file HTML yang sedang dibuka
+        let htmlFile = null;
+
+        if (currentPath.endsWith(".html")) {
+          htmlFile = projectFiles[currentPath];
+        } else {
+          // Jika sedang edit CSS/JS, cari index.html di project
+          const files = Object.values(projectFiles);
+          htmlFile =
+            files.find((f) => f.name === "index.html") ||
+            files.find((f) => f.name.endsWith(".html"));
+        }
+
+        if (!htmlFile) {
+          // Tidak ada file HTML yang bisa dirender
+          return;
+        }
+
+        let finalHTML = htmlFile.content;
+
+        // INJECT CSS (Ganti <link rel="stylesheet"> dengan <style> isi file CSS kita)
+        const cssFiles = Object.values(projectFiles).filter((f) =>
+          f.name.endsWith(".css"),
+        );
+        cssFiles.forEach((css) => {
+          // Regex untuk mencari <link> yang mengarah ke file CSS ini
+          // Contoh: href="style.css" atau href="./style.css"
+          const regex = new RegExp(
+            `<link[^>]+href=["']\\.?\\/?${css.name}["'][^>]*>`,
+            "gi",
+          );
+          if (finalHTML.match(regex)) {
+            // Replace tag <link> dengan <style>...</style>
+            finalHTML = finalHTML.replace(
+              regex,
+              `<style>\n/* Injected ${css.name} */\n${css.content}\n</style>`,
+            );
+          } else {
+            // Jika tidak ketemu link-nya (mungkin file baru), inject aja ke head
+            finalHTML = finalHTML.replace(
+              "</head>",
+              `<style>\n/* Auto-injected ${css.name} */\n${css.content}\n</style></head>`,
+            );
+          }
+        });
+
+        // INJECT JS (Ganti <script src="..."> dengan <script> isi file JS kita)
+        const jsFiles = Object.values(projectFiles).filter((f) =>
+          f.name.endsWith(".js"),
+        );
+        jsFiles.forEach((js) => {
+          const regex = new RegExp(
+            `<script[^>]+src=["']\\.?\\/?${js.name}["'][^>]*><\/script>`,
+            "gi",
+          );
+          if (finalHTML.match(regex)) {
+            finalHTML = finalHTML.replace(
+              regex,
+              `<script>\n/* Injected ${js.name} */\n${js.content}\n<\/script>`,
+            );
+          }
+        });
+
+        // Inject Base Tag (Optional, for images/assets hosted elsewhere)
+        // Note: Kita matikan dulu agar tidak conflict dengan blob local
+        // if (!finalHTML.includes('<base')) {
+        //    finalHTML = finalHTML.replace('<head>', `<head><base href=".">`);
+        // }
+
+        // Render ke Iframe
+        frame.srcdoc = finalHTML;
+      }
+
+      /* --- FILE SYSTEM --- */
+      async function loadFiles() {
         try {
           const res = await fetch("/api/files", {
             method: "POST",
@@ -337,114 +590,120 @@
           list.innerHTML = "";
 
           if (data.success) {
-            data.files.sort((a, b) => (a.name === 'index.html' ? -1 : 1));
-            
-            // Render UI List
-            data.files.forEach((file) => {
-              const div = document.createElement("div");
-              div.className = "file-item";
-              let icon = "ri-file-line";
-              if (file.name.endsWith(".html")) icon = "ri-html5-line";
-              if (file.name.endsWith(".css")) icon = "ri-css3-line";
-              if (file.name.endsWith(".js")) icon = "ri-javascript-line";
-              
-              div.innerHTML = `<i class="${icon}"></i> ${file.name}`;
-              div.onclick = () => loadContent(file.path, div);
-              list.appendChild(div);
+            // Sort: index.html first
+            data.files.sort((a, b) => (a.name === "index.html" ? -1 : 1));
 
-              // PRE-FETCH ESSENTIALS (Background)
-              // We silently fetch index.html, style.css, script.js to populate cache
-              if(["index.html", "style.css", "main.css", "script.js", "main.js"].includes(file.name)) {
-                  fetchFileContent(file.path, false); 
-              }
-            });
-            
+            // PRE-LOAD ALL FILES CONTENT FOR PREVIEW CACHE
+            // Kita fetch isinya satu per satu di background agar preview ready
+            await Promise.all(
+              data.files.map(async (file) => {
+                // Setup UI item
+                const div = document.createElement("div");
+                div.className = "file-item";
+                let icon = "ri-file-line";
+                if (file.name.endsWith(".html")) icon = "ri-html5-line";
+                if (file.name.endsWith(".css")) icon = "ri-css3-line";
+                if (file.name.endsWith(".js")) icon = "ri-javascript-line";
+                div.innerHTML = `<i class="${icon}"></i> ${file.name}`;
+                div.id = `file-${file.path.replace(/\./g, "-")}`; // Unique ID for UI
+                div.onclick = () => selectFile(file.path);
+                list.appendChild(div);
+
+                // Fetch content
+                const contentRes = await fetch("/api/read", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ repoName, filePath: file.path }),
+                });
+                const contentData = await contentRes.json();
+
+                // Store to Cache
+                projectFiles[file.path] = {
+                  name: file.name,
+                  path: file.path,
+                  sha: contentData.sha,
+                  content: contentData.content || "",
+                };
+              }),
+            );
+
             // Auto open index.html
-            const idx = data.files.find(f => f.name === 'index.html');
-            if(idx) {
-                // Load it visibly
-                const items = document.querySelectorAll('.file-item');
-                if(items.length > 0) items[0].click(); 
-            }
+            if (projectFiles["index.html"]) selectFile("index.html");
+            else if (data.files.length > 0) selectFile(data.files[0].path);
           }
-        } catch (e) { showToast("Failed to load files", "error"); }
+        } catch (e) {
+          console.error(e);
+          showToast("Failed to load files", "error");
+        }
       }
 
-      async function fetchFileContent(path, setActive = true) {
-        try {
-            const res = await fetch("/api/read", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ repoName, filePath: path }),
-            });
-            const data = await res.json();
-            if (data.success) {
-                fileCache[path] = data.content; // Save to Cache
-                if(path === 'index.html') currentSha = data.sha; // Only track SHA for active file usually, but for now ok
-                
-                if(setActive) {
-                    editor.setValue(data.content);
-                    // Update SHA for save
-                    currentSha = data.sha;
-                }
-            }
-        } catch(e) {}
-      }
+      function selectFile(path) {
+        // UI Active State
+        document
+          .querySelectorAll(".file-item")
+          .forEach((el) => el.classList.remove("active"));
+        const el = document.getElementById(`file-${path.replace(/\./g, "-")}`);
+        if (el) el.classList.add("active");
 
-      async function loadContent(path, element) {
-        document.querySelectorAll(".file-item").forEach((el) => el.classList.remove("active"));
-        if(element) element.classList.add("active");
-        
-        document.getElementById("currentFileName").innerText = path;
         currentPath = path;
-        
+        const file = projectFiles[path];
+
+        document.getElementById("currentFileName").innerText = file.name;
+
+        // Set Language
         let lang = "plaintext";
-        if (path.endsWith(".html")) lang = "html";
-        if (path.endsWith(".css")) lang = "css";
-        if (path.endsWith(".js")) lang = "javascript";
+        if (file.name.endsWith(".html")) lang = "html";
+        if (file.name.endsWith(".css")) lang = "css";
+        if (file.name.endsWith(".js")) lang = "javascript";
+
         document.getElementById("langDisplay").innerText = lang.toUpperCase();
         monaco.editor.setModelLanguage(editor.getModel(), lang);
 
-        // Try cache first for speed, then verify
-        if(fileCache[path]) {
-            editor.setValue(fileCache[path]);
-        }
-        
-        // Fetch fresh
-        try {
-          const res = await fetch("/api/read", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ repoName, filePath: path }),
-          });
-          const data = await res.json();
+        // Set Content from Cache
+        // Penting: Gunakan setValue dari Monaco, jangan innerText
+        // Kita gunakan cache karena sudah di-fetch di awal
+        editor.setValue(file.content);
+        currentSha = file.sha;
 
-          if (data.success) {
-            fileCache[path] = data.content; // Update cache
-            editor.setValue(data.content);
-            currentSha = data.sha;
-            if(isPreviewOpen) updatePreviewContent();
-          }
-        } catch (e) { showToast("Connection error", "error"); }
+        // Trigger Preview Update if panel is open
+        if (isPreviewOpen) updatePreviewContent();
       }
 
       /* --- ACTIONS --- */
       function formatCode() {
-        if(!currentPath) return;
+        if (!currentPath) return;
         const code = editor.getValue();
-        let parser = null, plugins = [];
+        let parser = null,
+          plugins = [];
 
-        if (currentPath.endsWith(".html")) { parser = "html"; plugins = prettierPlugins; }
-        else if (currentPath.endsWith(".css")) { parser = "css"; plugins = prettierPlugins; }
-        else if (currentPath.endsWith(".js")) { parser = "babel"; plugins = prettierPlugins; }
+        if (currentPath.endsWith(".html")) {
+          parser = "html";
+          plugins = prettierPlugins;
+        } else if (currentPath.endsWith(".css")) {
+          parser = "css";
+          plugins = prettierPlugins;
+        } else if (currentPath.endsWith(".js")) {
+          parser = "babel";
+          plugins = prettierPlugins;
+        }
 
-        if (!parser) return showToast("No formatter for this file type.", "error");
+        if (!parser)
+          return showToast("No formatter for this file type.", "error");
 
         try {
-          const formatted = prettier.format(code, { parser, plugins, tabWidth: 2, printWidth: 80 });
+          const formatted = prettier.format(code, {
+            parser,
+            plugins,
+            tabWidth: 2,
+            printWidth: 80,
+          });
           editor.setValue(formatted);
+          // Update cache juga
+          projectFiles[currentPath].content = formatted;
           showToast("Code formatted!", "success");
-        } catch (e) { showToast("Syntax Error! Fix code first.", "error"); }
+        } catch (e) {
+          showToast("Syntax Error! Fix code first.", "error");
+        }
       }
 
       async function saveFile() {
@@ -456,28 +715,36 @@
           const res = await fetch("/api/save", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ repoName, filePath: currentPath, content, sha: currentSha }),
+            body: JSON.stringify({
+              repoName,
+              filePath: currentPath,
+              content,
+              sha: currentSha,
+            }),
           });
           const data = await res.json();
 
           if (data.success) {
             showToast("Saved & Triggered Deploy!", "success");
-            // Refresh SHA
-            fetch("/api/read", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ repoName, filePath: currentPath }) })
-              .then(r => r.json()).then(d => { if(d.success) currentSha = d.sha; });
+            // Update cache logic if SHA changes (optional for simple usage)
           } else {
             showToast("Save Failed!", "error");
           }
-        } catch (e) { showToast("Network Error", "error"); }
+        } catch (e) {
+          showToast("Network Error", "error");
+        }
       }
 
       function showToast(msg, type = "success") {
         const container = document.getElementById("toastContainer");
         const div = document.createElement("div");
         div.className = `toast ${type}`;
-        div.innerHTML = `<i class="${type === 'error' ? 'ri-error-warning-line' : 'ri-check-line'}"></i> ${msg}`;
+        div.innerHTML = `<i class="${type === "error" ? "ri-error-warning-line" : "ri-check-line"}"></i> ${msg}`;
         container.appendChild(div);
-        setTimeout(() => { div.style.animation = "fadeOut 0.5s forwards"; setTimeout(() => div.remove(), 500); }, 3000);
+        setTimeout(() => {
+          div.style.animation = "fadeOut 0.5s forwards";
+          setTimeout(() => div.remove(), 500);
+        }, 3000);
       }
     </script>
   </body>
