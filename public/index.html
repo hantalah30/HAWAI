@@ -9,21 +9,8 @@
     <meta name="title" content="Hawai Hosting 🌴 | Sonic Identity" />
     <meta
       name="description"
-      content="Infrastruktur hosting tingkat lanjut dengan arsitektur Edge Network. Tanpa server, tanpa konfigurasi."
-    />
-
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://hawai-seven.vercel.app/" />
-    <meta property="og:title" content="Hawai Hosting 🌴 | Sonic Identity" />
-    <meta
-      property="og:description"
       content="Infrastruktur hosting tingkat lanjut dengan arsitektur Edge Network."
     />
-    <meta
-      property="og:image"
-      content="https://hawai-seven.vercel.app/logo.png"
-    />
-    <meta property="twitter:card" content="summary_large_image" />
 
     <link
       href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;500;600;700&family=Syncopate:wght@400;700&family=Outfit:wght@300;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap"
@@ -38,22 +25,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-
-    <script>
-      (function () {
-        // Security Layer (Keep existing)
-        document.addEventListener("contextmenu", (e) => e.preventDefault());
-        document.addEventListener("keydown", function (e) {
-          if (
-            e.keyCode == 123 ||
-            (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74)) ||
-            (e.ctrlKey && e.keyCode == 85)
-          ) {
-            e.preventDefault();
-          }
-        });
-      })();
-    </script>
 
     <style>
       :root {
@@ -78,6 +49,7 @@
       ::-webkit-scrollbar-thumb:hover {
         background: var(--neon-blue);
       }
+
       * {
         margin: 0;
         padding: 0;
@@ -96,7 +68,7 @@
         overflow-y: auto;
       }
 
-      /* --- NEW VISUAL BOOT LOADER (No Text) --- */
+      /* BOOT & REACTOR */
       .boot-layer {
         position: fixed;
         inset: 0;
@@ -106,15 +78,12 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        gap: 30px;
+        gap: 40px;
       }
-
-      /* Reactor Spinner */
       .reactor-loader {
         position: relative;
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
+        width: 150px;
+        height: 150px;
         perspective: 800px;
       }
       .reactor-ring {
@@ -152,22 +121,15 @@
         left: 30%;
         background: radial-gradient(circle, var(--neon-blue), transparent);
         border-radius: 50%;
-        box-shadow: 0 0 20px var(--neon-blue);
+        box-shadow: 0 0 30px var(--neon-blue);
         animation: pulse 1s ease-in-out infinite alternate;
       }
-
       @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
         100% {
           transform: rotate(360deg);
         }
       }
       @keyframes spin-rev {
-        0% {
-          transform: rotate(0deg);
-        }
         100% {
           transform: rotate(-360deg);
         }
@@ -182,7 +144,6 @@
           transform: scale(1.1);
         }
       }
-
       .boot-text {
         font-family: "Syncopate";
         font-weight: 700;
@@ -195,7 +156,6 @@
         color: white;
         text-shadow: 0 0 10px white;
       }
-
       .engage-btn {
         opacity: 0;
         background: rgba(255, 255, 255, 0.05);
@@ -219,16 +179,16 @@
         box-shadow: 0 0 40px rgba(0, 243, 255, 0.4);
       }
 
-      /* --- NEW UPLOAD LOADER VISUAL --- */
+      /* UPLOAD OVERLAY */
       .upload-overlay {
         position: absolute;
         inset: 0;
-        background: rgba(0, 0, 0, 0.9);
-        display: none; /* Active via JS */
+        background: rgba(0, 0, 0, 0.95);
+        display: none;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 20;
+        z-index: 50;
         border-radius: 12px;
       }
       .hex-spinner {
@@ -261,7 +221,7 @@
         letter-spacing: 1px;
       }
 
-      /* Split Door Effect */
+      /* AMBIENCE */
       .gate-top,
       .gate-bottom {
         position: fixed;
@@ -270,8 +230,7 @@
         height: 50vh;
         background: #020204;
         z-index: 99990;
-        transition: transform 1s cubic-bezier(0.8, 0, 0.2, 1);
-        border: none; /* Clean look */
+        transition: transform 1.2s cubic-bezier(0.8, 0, 0.2, 1);
       }
       .gate-top {
         top: 0;
@@ -283,8 +242,6 @@
         transform-origin: bottom;
         border-top: 1px solid #111;
       }
-
-      /* --- AMBIENCE & CURSOR --- */
       .noise-layer {
         position: fixed;
         inset: 0;
@@ -298,7 +255,6 @@
         inset: 0;
         z-index: -1;
       }
-
       .cursor-dot {
         width: 4px;
         height: 4px;
@@ -327,7 +283,7 @@
         mix-blend-mode: screen;
       }
 
-      /* --- NAV & SECTIONS --- */
+      /* UI */
       nav {
         position: fixed;
         top: 0;
@@ -339,6 +295,7 @@
         background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
         pointer-events: none;
         opacity: 0;
+        align-items: center;
       }
       .logo {
         font-family: "Syncopate";
@@ -346,12 +303,29 @@
         letter-spacing: 2px;
         pointer-events: auto;
       }
-      .menu-link {
+
+      /* AUTH USER PROFILE IN NAV */
+      .user-badge {
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 10px;
+        pointer-events: auto;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 5px 15px;
+        border-radius: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .user-avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid var(--neon-green);
+      }
+      .user-name {
         font-family: "JetBrains Mono";
         font-size: 0.8rem;
-        color: var(--neon-blue);
-        text-decoration: none;
-        pointer-events: auto;
+        color: var(--neon-green);
       }
 
       section {
@@ -363,8 +337,6 @@
         display: flex;
         align-items: center;
       }
-
-      /* --- HERO --- */
       .hero-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -425,7 +397,6 @@
           clip-path: inset(5% 0 80% 0);
         }
       }
-
       .subtitle {
         font-size: 1.1rem;
         color: #888;
@@ -434,7 +405,7 @@
         margin-bottom: 40px;
       }
 
-      /* HUD CONSOLE */
+      /* HUD */
       .hud-glass {
         background: rgba(10, 10, 15, 0.4);
         backdrop-filter: blur(20px);
@@ -456,20 +427,12 @@
         align-items: start;
         gap: 10px;
       }
-      .warning-icon {
-        color: var(--neon-yellow);
-        font-size: 1.2rem;
-      }
       .warning-text {
         font-family: "JetBrains Mono";
         font-size: 0.75rem;
         color: #ccc;
         line-height: 1.4;
       }
-      .warning-text strong {
-        color: var(--neon-yellow);
-      }
-
       .input-line {
         width: 100%;
         background: transparent;
@@ -482,7 +445,6 @@
         padding: 15px 0;
         outline: none;
         transition: 0.3s;
-        pointer-events: auto;
       }
       .input-line:focus {
         border-color: var(--neon-blue);
@@ -496,7 +458,6 @@
         transition: 0.3s;
         position: relative;
         background: rgba(0, 0, 0, 0.2);
-        pointer-events: auto;
       }
       .upload-hex:hover {
         border-color: var(--neon-green);
@@ -520,13 +481,11 @@
         cursor: none;
         clip-path: polygon(0 0, 100% 0, 100% 80%, 95% 100%, 0 100%);
         transition: 0.3s;
-        pointer-events: auto;
       }
       .btn-cyber:hover {
         background: var(--neon-blue);
         clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
       }
-
       .success-terminal {
         display: none;
         margin-top: 20px;
@@ -538,7 +497,39 @@
         color: var(--neon-green);
       }
 
-      /* --- IDENTITY SECTION --- */
+      /* AUTH WALL STYLES */
+      .auth-wall {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        padding: 40px 0;
+        text-align: center;
+        border: 1px solid var(--neon-blue);
+        background: rgba(0, 243, 255, 0.02);
+      }
+      .btn-google {
+        background: transparent;
+        border: 1px solid var(--neon-blue);
+        color: var(--neon-blue);
+        padding: 15px 30px;
+        font-family: "Rajdhani";
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: 0.3s;
+        cursor: pointer;
+      }
+      .btn-google:hover {
+        background: var(--neon-blue);
+        color: #000;
+        box-shadow: 0 0 20px var(--neon-blue);
+      }
+
+      /* ID */
       .identity-container {
         padding: 150px 0;
         max-width: 1300px;
@@ -548,16 +539,6 @@
         gap: 80px;
         align-items: center;
       }
-      .bio-wrapper {
-        position: relative;
-      }
-      .bio-label {
-        font-family: "JetBrains Mono";
-        color: var(--neon-purple);
-        font-size: 0.9rem;
-        margin-bottom: 20px;
-        display: block;
-      }
       .bio-name {
         font-family: "Rajdhani";
         font-weight: 700;
@@ -565,7 +546,6 @@
         line-height: 1;
         margin-bottom: 10px;
         color: white;
-        pointer-events: auto;
       }
       .bio-role {
         font-family: "Syncopate";
@@ -584,7 +564,6 @@
       }
       .skill-group {
         margin-bottom: 15px;
-        pointer-events: auto;
       }
       .skill-info {
         display: flex;
@@ -598,7 +577,6 @@
         width: 100%;
         height: 4px;
         background: #222;
-        position: relative;
       }
       .skill-fill {
         height: 100%;
@@ -606,14 +584,12 @@
         box-shadow: 0 0 10px var(--neon-blue);
         width: 0;
       }
-
       .photo-container {
         position: relative;
         padding: 20px;
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.02);
         backdrop-filter: blur(10px);
-        pointer-events: auto;
       }
       .photo-container::before {
         content: "";
@@ -680,9 +656,6 @@
         .identity-container {
           grid-template-columns: 1fr;
         }
-        .identity-container {
-          padding: 80px 0;
-        }
         .photo-container {
           order: -1;
           margin-bottom: 50px;
@@ -712,7 +685,7 @@
         <div class="reactor-ring r3"></div>
         <div class="reactor-core"></div>
       </div>
-      <div class="boot-text" id="bootText">INITIALIZING</div>
+      <div class="boot-text" id="bootText">SYSTEM INITIALIZING</div>
       <button class="engage-btn hover-trigger" id="enterBtn">
         SYSTEM READY // ENTER
       </button>
@@ -728,6 +701,12 @@
 
     <nav>
       <div class="logo hover-trigger">HAWAI</div>
+
+      <div class="user-badge" id="userBadge">
+        <img src="" class="user-avatar" id="navAvatar" />
+        <span class="user-name" id="navName">COMMANDER</span>
+      </div>
+
       <a href="#identity" class="menu-link hover-trigger">// IDENTITY_CORE</a>
     </nav>
 
@@ -735,7 +714,6 @@
       <div class="hero-container">
         <div class="hero-content">
           <div
-            class="badge-capsule"
             style="
               display: inline-flex;
               align-items: center;
@@ -761,18 +739,15 @@
               >SYSTEM ONLINE</span
             >
           </div>
-
           <div class="glitch-wrapper">
             <h1 class="glitch-title" data-text="DEPLOY THE FUTURE">
               DEPLOY<br />THE FUTURE
             </h1>
           </div>
-
           <p class="subtitle">
             Infrastruktur hosting tingkat lanjut dengan arsitektur Edge Network.
             Tanpa server, tanpa konfigurasi. Kecepatan cahaya.
           </p>
-
           <a
             href="#console-anchor"
             class="hover-trigger"
@@ -803,19 +778,31 @@
           >
             <div class="upload-overlay" id="loadingOverlay">
               <div class="hex-spinner"></div>
-              <div class="upload-status">UPLOADING ASSETS...</div>
+              <div class="upload-status">ENCRYPTING ASSETS...</div>
             </div>
 
             <div class="warning-box">
               <i class="ri-alert-fill warning-icon"></i>
               <div class="warning-text">
-                <strong>SYSTEM NOTICE:</strong><br />
-                Platform only supports <strong>Static Files</strong> (HTML, CSS,
-                JS). PHP/Python/Ruby scripts are not executable.
+                <strong>SYSTEM NOTICE:</strong><br />Platform only supports
+                <strong>Static Files</strong> (HTML, CSS, JS).
               </div>
             </div>
 
-            <form id="deployForm">
+            <div class="auth-wall" id="authWall">
+              <i
+                class="ri-lock-2-fill"
+                style="font-size: 3rem; color: var(--neon-blue)"
+              ></i>
+              <div style="font-family: &quot;JetBrains Mono&quot;; color: #888">
+                AUTHENTICATION REQUIRED TO DEPLOY
+              </div>
+              <button class="btn-google hover-trigger" id="btnLogin">
+                <i class="ri-google-fill"></i> LOGIN WITH GOOGLE
+              </button>
+            </div>
+
+            <form id="deployForm" style="display: none">
               <label
                 style="
                   font-family: &quot;JetBrains Mono&quot;;
@@ -875,7 +862,7 @@
                   color: white;
                   text-decoration: underline;
                 "
-                >OPEN SITE</a
+                >OPEN STATUS PAGE</a
               >
             </div>
           </div>
@@ -892,8 +879,7 @@
           <p class="bio-desc">
             Anak SI Semester 3 yang hidup di antara
             <code>&lt;code&gt;</code> dan <em>art</em>. Hobi ngerakit logika
-            ribet biar lu bisa <em>scrolling</em> dengan smooth. Less error,
-            more aesthetic.
+            ribet biar lu bisa <em>scrolling</em> dengan smooth.
           </p>
           <div class="skills">
             <div
@@ -932,7 +918,6 @@
             </div>
           </div>
         </div>
-
         <div class="photo-container hover-trigger" data-tilt>
           <img src="../hanung4.jpeg" class="profile-img" alt="Hanung" />
           <div class="data-box">
@@ -950,8 +935,79 @@
       </div>
     </section>
 
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+      // --- FIREBASE CONFIGURATION (ISI PUNYA KAMU DI SINI) ---
+      const firebaseConfig = {
+        apiKey: "AIzaSyBpuG8C9_RBXo7OmAXCmxYGZgZ9MoWOmeo",
+        authDomain: "projek-abs.firebaseapp.com",
+        projectId: "projek-abs",
+        storageBucket: "projek-abs.firebasestorage.app",
+        messagingSenderId: "266262062550",
+        appId: "1:266262062550:web:4107f0f2123f5864077077",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+
+      let currentUserEmail = "";
+
+      const btnLogin = document.getElementById("btnLogin");
+      const authWall = document.getElementById("authWall");
+      const deployForm = document.getElementById("deployForm");
+      const userBadge = document.getElementById("userBadge");
+      const navAvatar = document.getElementById("navAvatar");
+      const navName = document.getElementById("navName");
+
+      // LOGIN HANDLER
+      btnLogin.addEventListener("click", () => {
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            console.log("Logged in:", result.user);
+          })
+          .catch((error) => {
+            console.error(error);
+            alert("Login Failed: " + error.message);
+          });
+      });
+
+      // AUTH STATE LISTENER
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // USER LOGIN
+          currentUserEmail = user.email;
+          authWall.style.display = "none";
+          deployForm.style.display = "block";
+
+          // Update UI
+          userBadge.style.display = "flex";
+          navAvatar.src = user.photoURL;
+          navName.innerText = user.displayName.split(" ")[0].toUpperCase();
+
+          // Animasi Form Muncul
+          gsap.from("#deployForm", { opacity: 0, y: 20, duration: 0.5 });
+        } else {
+          // USER LOGOUT
+          authWall.style.display = "flex";
+          deployForm.style.display = "none";
+          userBadge.style.display = "none";
+        }
+      });
+
+      // --- EXPORT VARIABLE FOR DEPLOY SCRIPT ---
+      window.getUserEmail = () => currentUserEmail;
+    </script>
+
     <script>
-      /* --- AUDIO SETUP --- */
+      /* --- AUDIO --- */
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       let audioCtx;
       const SoundFX = {
@@ -1012,20 +1068,16 @@
         },
       };
 
-      /* --- NEW VISUAL BOOT SEQUENCE --- */
+      /* --- BOOT SEQUENCE --- */
       const enterBtn = document.getElementById("enterBtn");
       const bootText = document.getElementById("bootText");
-
-      // Simulasikan loading system tanpa text log yang panjang
       setTimeout(() => {
         bootText.innerText = "LOADING CORE MODULES...";
         bootText.classList.add("active");
       }, 500);
-
       setTimeout(() => {
         bootText.innerText = "ESTABLISHING CONNECTION...";
       }, 1500);
-
       setTimeout(() => {
         bootText.style.display = "none";
         gsap.to(enterBtn, {
@@ -1040,11 +1092,8 @@
         audioCtx = new AudioContext();
         SoundFX.click();
         SoundFX.bootUp();
-
         gsap.to(enterBtn, { scale: 1.1, opacity: 0, duration: 0.2 });
         gsap.to(".reactor-loader", { scale: 0, opacity: 0, duration: 0.5 });
-
-        // Gate open
         gsap.to("#gateTop", {
           y: "-100%",
           duration: 1.5,
@@ -1057,8 +1106,6 @@
           ease: "power4.inOut",
           delay: 0.3,
         });
-
-        // Fade out boot layer
         gsap.to(".boot-layer", {
           opacity: 0,
           duration: 1,
@@ -1068,8 +1115,6 @@
             document.body.classList.add("unlocked");
           },
         });
-
-        // Content In
         gsap.to("nav", { opacity: 1, duration: 1, delay: 1.2 });
         gsap.from(".hero-content > *", {
           y: 50,
@@ -1088,7 +1133,7 @@
         });
       });
 
-      /* --- EXISTING CANVAS & LOGIC --- */
+      /* --- VORTEX --- */
       const canvas = document.getElementById("vortex-canvas"),
         ctx = canvas.getContext("2d");
       let width,
@@ -1161,6 +1206,7 @@
       }
       animate();
 
+      /* --- INTERACTIONS --- */
       const cursorDot = document.querySelector(".cursor-dot"),
         cursorCircle = document.querySelector(".cursor-circle");
       document.addEventListener("mousemove", (e) => {
@@ -1184,6 +1230,70 @@
           e.addEventListener("click", () => SoundFX.click());
         });
 
+      /* --- DEPLOY HANDLER --- */
+      const fileInput = document.getElementById("pFile"),
+        dropArea = document.getElementById("dropArea"),
+        form = document.getElementById("deployForm");
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+          document.getElementById("fileMsg").innerText =
+            fileInput.files[0].name;
+          document.getElementById("fileMsg").style.color = "var(--neon-green)";
+          document.getElementById("fileIcon").style.color = "var(--neon-green)";
+          dropArea.style.borderColor = "var(--neon-green)";
+          dropArea.style.background = "rgba(0, 255, 157, 0.05)";
+          SoundFX.hover();
+        }
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        SoundFX.click();
+        document.getElementById("loadingOverlay").style.display = "flex";
+
+        // Artificial Delay
+        await new Promise((r) => setTimeout(r, 4000));
+
+        const formData = new FormData();
+        formData.append("projectName", document.getElementById("pName").value);
+        formData.append("file", fileInput.files[0]);
+
+        // --- ADD USER EMAIL TO FORM DATA ---
+        if (window.getUserEmail) {
+          formData.append("userEmail", window.getUserEmail());
+        }
+
+        try {
+          const res = await fetch("/deploy", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+          await new Promise((r) => setTimeout(r, 1000));
+          document.getElementById("loadingOverlay").style.display = "none";
+
+          if (data.success) {
+            form.style.display = "none";
+            document.getElementById("resultBox").style.display = "block";
+            SoundFX.hover();
+            confetti({
+              particleCount: 200,
+              spread: 150,
+              colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
+            });
+            const finalLink = document.getElementById("resultLink");
+            finalLink.href = `/status.html?url=${data.url}&repo=${data.repo}`;
+          } else {
+            alert("DEPLOYMENT FAILED: " + data.error);
+            location.reload();
+          }
+        } catch (err) {
+          alert("CONNECTION ERROR");
+          console.error(err);
+          location.reload();
+        }
+      });
+
       gsap.registerPlugin(ScrollTrigger);
       gsap.from(".bio-wrapper > *", {
         scrollTrigger: { trigger: ".bio-wrapper", start: "top 80%" },
@@ -1206,66 +1316,6 @@
         duration: 1.5,
         ease: "power2.out",
         stagger: 0.2,
-      });
-
-      /* --- UPLOAD LOGIC --- */
-      const fileInput = document.getElementById("pFile"),
-        dropArea = document.getElementById("dropArea"),
-        form = document.getElementById("deployForm");
-      fileInput.addEventListener("change", () => {
-        if (fileInput.files.length > 0) {
-          document.getElementById("fileMsg").innerText =
-            fileInput.files[0].name;
-          document.getElementById("fileMsg").style.color = "var(--neon-green)";
-          document.getElementById("fileIcon").style.color = "var(--neon-green)";
-          dropArea.style.borderColor = "var(--neon-green)";
-          dropArea.style.background = "rgba(0, 255, 157, 0.05)";
-          SoundFX.hover();
-        }
-      });
-
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        SoundFX.click();
-
-        // New Upload UI
-        // form.style.display = "none"; // Hide form
-        document.getElementById("loadingOverlay").style.display = "flex"; // Show Overlay
-
-        const formData = new FormData();
-        formData.append("projectName", document.getElementById("pName").value);
-        formData.append("file", fileInput.files[0]);
-
-        try {
-          const res = await fetch("/deploy", {
-            method: "POST",
-            body: formData,
-          });
-          const data = await res.json();
-
-          document.getElementById("loadingOverlay").style.display = "none"; // Hide Overlay
-
-          if (data.success) {
-            form.style.display = "none";
-            document.getElementById("resultBox").style.display = "block";
-            SoundFX.hover();
-            confetti({
-              particleCount: 200,
-              spread: 150,
-              colors: ["#00f3ff", "#bc13fe", "#fcee0a"],
-            });
-            const finalLink = document.getElementById("resultLink");
-            finalLink.innerText = "OPEN STATUS PAGE";
-            finalLink.href = `/status.html?url=${data.url}&repo=${data.repo}`;
-          } else {
-            alert("DEPLOYMENT FAILED: " + data.error);
-            location.reload();
-          }
-        } catch (err) {
-          alert("CONNECTION ERROR: Gagal menghubungi server Hawai.");
-          console.error(err);
-          location.reload();
-        }
       });
       VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
         max: 10,

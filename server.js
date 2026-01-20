@@ -12,7 +12,7 @@ const os = require("os");
 
 const app = express();
 app.use(cors());
-app.use(express.json()); // Penting agar bisa baca JSON dari editor
+app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // HALAMAN DEPAN
@@ -36,31 +36,27 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const CF_ACCOUNT_ID = process.env.CF_ACCOUNT_ID;
 const CF_API_TOKEN = process.env.CF_API_TOKEN;
 
-// --- API BARU: AMBIL LIST FILE DARI GITHUB ---
+// --- API: AMBIL LIST FILE ---
 app.post("/api/files", async (req, res) => {
   const { repoName } = req.body;
   try {
-    // Ambil struktur folder root
     const response = await axios.get(
       `https://api.github.com/repos/${GITHUB_USER}/${repoName}/contents/`,
       { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
-
-    // Filter hanya file teks yang bisa diedit (html, css, js, txt, json)
     const files = response.data
       .filter(
         (f) =>
           f.type === "file" && f.name.match(/\.(html|css|js|json|txt|md)$/i),
       )
       .map((f) => ({ name: f.name, path: f.path, sha: f.sha }));
-
     res.json({ success: true, files });
   } catch (error) {
     res.status(500).json({ success: false, error: "Gagal mengambil file" });
   }
 });
 
-// --- API BARU: BACA ISI FILE ---
+// --- API: BACA FILE ---
 app.post("/api/read", async (req, res) => {
   const { repoName, filePath } = req.body;
   try {
@@ -68,8 +64,6 @@ app.post("/api/read", async (req, res) => {
       `https://api.github.com/repos/${GITHUB_USER}/${repoName}/contents/${filePath}`,
       { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
-
-    // GitHub kasih konten dalam format Base64, kita decode ke Text biasa
     const content = Buffer.from(response.data.content, "base64").toString(
       "utf-8",
     );
@@ -79,34 +73,27 @@ app.post("/api/read", async (req, res) => {
   }
 });
 
-// --- API BARU: SIMPAN (UPDATE) FILE KE GITHUB ---
+// --- API: SAVE FILE ---
 app.post("/api/save", async (req, res) => {
   const { repoName, filePath, content, sha } = req.body;
   try {
-    // Encode balik ke Base64
     const contentEncoded = Buffer.from(content).toString("base64");
-
     await axios.put(
       `https://api.github.com/repos/${GITHUB_USER}/${repoName}/contents/${filePath}`,
       {
         message: "Update via Hawai Editor",
         content: contentEncoded,
-        sha: sha, // Wajib kirim SHA lama untuk verifikasi update
+        sha: sha,
       },
       { headers: { Authorization: `token ${GITHUB_TOKEN}` } },
     );
-
-    // Trigger Cloudflare Re-deployment (Optional, biasanya otomatis kalau connect github)
-    // Tapi kita bisa pancing biar cepet (opsional)
-
     res.json({ success: true });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false, error: "Gagal menyimpan file" });
   }
 });
 
-// --- FUNGSI DEPLOY (YANG LAMA) ---
+// --- UTILITAS GIT ---
 const cleanGitTrash = (dir) => {
   if (!fs.existsSync(dir)) return;
   const files = fs.readdirSync(dir);
@@ -144,12 +131,16 @@ async function findIndexDir(dir) {
   return null;
 }
 
+// --- ENDPOINT DEPLOY UTAMA ---
 app.post("/deploy", upload.single("file"), async (req, res) => {
   if (!req.file || !req.body.projectName) {
     return res
       .status(400)
       .json({ success: false, error: "Data tidak lengkap!" });
   }
+
+  // Ambil email user dari request (dikirim dari frontend Firebase)
+  const userEmail = req.body.userEmail || "anonymous@hawai.id";
 
   const projectName = req.body.projectName
     .toLowerCase()
@@ -159,7 +150,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
   const extractPath = path.join(EXTRACT_DIR, hawaiName);
 
   try {
-    console.log(`🚀 Processing: ${hawaiName}`);
+    console.log(`🚀 Processing: ${hawaiName} by ${userEmail}`);
     if (fs.existsSync(extractPath)) fs.removeSync(extractPath);
     const zip = new AdmZip(zipPath);
     zip.extractAllTo(extractPath, true);
@@ -185,7 +176,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       );
       await delay(1000);
     } catch (e) {
-      console.log("Repo exists...");
+      console.log("Repo exists, pushing update...");
     }
 
     await git.init({ fs, dir: extractPath, defaultBranch: "main" });
@@ -194,18 +185,22 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       if (file !== ".git")
         await git.add({ fs, dir: extractPath, filepath: file });
     }
+
+    // Commit dengan Author dari Firebase
     await git.commit({
       fs,
       dir: extractPath,
-      author: { name: "HawaiBot", email: "bot@hawai.id" },
-      message: "Auto Deploy",
+      author: { name: "Hawai Deployer", email: userEmail },
+      message: `Deploy by ${userEmail}`,
     });
+
     await git.addRemote({
       fs,
       dir: extractPath,
       remote: "origin",
       url: `https://github.com/${GITHUB_USER}/${hawaiName}.git`,
     });
+
     await git.push({
       fs,
       http,
@@ -216,6 +211,7 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       force: true,
     });
 
+    // Cloudflare Trigger (Auto)
     try {
       await axios.post(
         `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects`,
@@ -237,22 +233,12 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
       );
     } catch (e) {}
 
-    await delay(2000);
-    try {
-      await axios.post(
-        `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/pages/projects/${hawaiName}/deployments`,
-        { branch: "main" },
-        { headers: { Authorization: `Bearer ${CF_API_TOKEN}` } },
-      );
-    } catch (e) {}
-
     const liveUrl = `https://${hawaiName}.pages.dev`;
     try {
       fs.removeSync(extractPath);
       fs.unlinkSync(zipPath);
     } catch (e) {}
 
-    // PENTING: Kirim juga nama repo agar frontend tahu harus ngedit repo mana
     res.json({ success: true, url: liveUrl, repo: hawaiName });
   } catch (error) {
     console.error(error);
@@ -260,4 +246,5 @@ app.post("/deploy", upload.single("file"), async (req, res) => {
   }
 });
 
-module.exports = app;
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🔥 Hawai Server running on port ${PORT}`));
