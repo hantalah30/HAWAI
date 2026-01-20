@@ -159,8 +159,6 @@
         box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
         color: black;
       }
-
-      /* Tombol Aktif (Saat Preview Nyala) */
       .btn.active {
         background: rgba(0, 243, 255, 0.2);
         color: var(--neon);
@@ -168,23 +166,23 @@
         box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
       }
 
-      /* SPLIT VIEW SYSTEM (FIXED) */
+      /* SPLIT VIEW */
       .workspace {
         flex: 1;
         display: flex;
         position: relative;
         overflow: hidden;
-        width: 100%; /* Pastikan width 100% */
+        width: 100%;
       }
 
       #monaco-container {
-        width: 100%; /* Default Full */
+        width: 100%;
         height: 100%;
         transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
       }
 
       #preview-container {
-        width: 0; /* Default Hidden */
+        width: 0;
         height: 100%;
         border-left: 1px solid var(--sidebar-border);
         background: white;
@@ -192,10 +190,9 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        opacity: 0; /* Fade effect */
+        opacity: 0;
       }
 
-      /* CLASS SAAT SPLIT AKTIF */
       .workspace.split #monaco-container {
         width: 50%;
       }
@@ -329,7 +326,7 @@
           letter-spacing: 2px;
         "
       >
-        LOADING IDE...
+        SYNCING WORKSPACE...
       </div>
     </div>
 
@@ -372,7 +369,7 @@
         <div id="preview-container">
           <div class="preview-header">
             <span style="display: flex; align-items: center; gap: 5px"
-              ><i class="ri-eye-line"></i> WEB SIMULATOR</span
+              ><i class="ri-eye-line"></i> WEB SIMULATOR (VIRTUAL)</span
             >
             <button
               class="btn"
@@ -416,7 +413,7 @@
       let isPreviewOpen = false;
       let debounceTimer = null;
 
-      const projectFiles = {}; // LOCAL STORAGE FOR CONTENT
+      const projectFiles = {}; // Cache semua isi file
 
       const params = new URLSearchParams(window.location.search);
       const repoName = params.get("repo");
@@ -462,15 +459,12 @@
           },
         );
 
-        // LISTENER: KETIKA KETIK KODE
         editor.onDidChangeModelContent(() => {
           if (currentPath && projectFiles[currentPath]) {
             projectFiles[currentPath].content = editor.getValue();
-
-            // JIKA PREVIEW AKTIF, UPDATE OTOMATIS (DEBOUNCE 500ms)
             if (isPreviewOpen) {
               clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(updatePreviewContent, 500);
+              debounceTimer = setTimeout(updatePreviewContent, 300); // 300ms delay
             }
           }
         });
@@ -489,11 +483,10 @@
           formatCode,
         );
 
-        // Load files setelah editor siap
         loadFiles();
       });
 
-      /* --- PREVIEW LOGIC (FIXED SPLIT) --- */
+      /* --- CORE PREVIEW LOGIC (SMART BUNDLER) --- */
       function togglePreview() {
         const workspace = document.getElementById("workspace");
         const btn = document.getElementById("btnPreview");
@@ -502,23 +495,18 @@
         isPreviewOpen = !isPreviewOpen;
 
         if (isPreviewOpen) {
-          // AKTIFKAN MODE SPLIT
           workspace.classList.add("split");
           btn.classList.add("active");
           status.innerText = "Realtime ON";
           status.style.color = "var(--neon-green)";
-
-          // Render preview pertama kali
           refreshPreview();
         } else {
-          // MATIKAN MODE SPLIT
           workspace.classList.remove("split");
           btn.classList.remove("active");
           status.innerText = "Realtime OFF";
           status.style.color = "#555";
         }
 
-        // PENTING: Tunggu transisi CSS (0.4s) selesai, baru resize editor
         setTimeout(() => {
           if (editor) editor.layout();
         }, 450);
@@ -528,11 +516,11 @@
         updatePreviewContent();
       }
 
+      // --- KUNCI: MENGGABUNGKAN SEMUA FILE JADI SATU ---
       function updatePreviewContent() {
         const frame = document.getElementById("previewFrame");
 
-        // 1. CARI HTML UTAMA
-        // Prioritas: File HTML yang sedang dibuka -> index.html -> sembarang file .html
+        // 1. Ambil Index HTML (Prioritas: file html aktif atau index.html)
         let htmlFile = null;
         if (currentPath && currentPath.endsWith(".html")) {
           htmlFile = projectFiles[currentPath];
@@ -544,72 +532,57 @@
         }
 
         if (!htmlFile) {
-          // Jika user cuma punya JS/CSS dan belum bikin HTML
-          frame.srcdoc = `<body style="background:#fff; font-family:sans-serif; padding:20px; color:#555;">
-              <h3>No HTML File Found</h3>
-              <p>Please create or open an .html file to see the preview.</p>
-            </body>`;
+          frame.srcdoc = `<body style="color:#555; padding:20px; font-family:sans-serif;"><h3>Waiting for HTML...</h3><p>Open or create an .html file.</p></body>`;
           return;
         }
 
         let finalHTML = htmlFile.content;
 
-        // 2. INJECT BASE TAG (Agar gambar/link external tetap jalan dari server)
+        // 2. INJECT CSS (Cari <link> dan ganti dengan <style>)
+        // Regex ini menangkap href="style.css", href="./style.css", href="/style.css"
+        finalHTML = finalHTML.replace(
+          /<link[^>]+href=["'](.*?)["'][^>]*>/gi,
+          (match, url) => {
+            // Bersihkan path (remove ./ or /)
+            const cleanName = url.split("/").pop();
+            // Cari file di cache yang namanya cocok
+            const foundCss = Object.values(projectFiles).find(
+              (f) => f.name === cleanName,
+            );
+
+            if (foundCss) {
+              return `<style>\n/* Injected: ${cleanName} */\n${foundCss.content}\n</style>`;
+            }
+            return match; // Kalau ga ketemu, biarin aja (mungkin link CDN)
+          },
+        );
+
+        // 3. INJECT JS (Cari <script src> dan ganti dengan <script>)
+        finalHTML = finalHTML.replace(
+          /<script[^>]+src=["'](.*?)["'][^>]*>\s*<\/script>/gi,
+          (match, url) => {
+            const cleanName = url.split("/").pop();
+            const foundJs = Object.values(projectFiles).find(
+              (f) => f.name === cleanName,
+            );
+
+            if (foundJs) {
+              return `<script>\n/* Injected: ${cleanName} */\ntry {\n${foundJs.content}\n} catch(e) { console.error('Preview JS Error:', e) }\n<\/script>`;
+            }
+            return match; // Biarin kalau CDN
+          },
+        );
+
+        // 4. INJECT BASE TAG (Opsional, buat gambar relative dari server)
         if (liveUrl && !finalHTML.includes("<base")) {
+          // Hati-hati dengan base tag, kadang bikin anchor link jumpy
           finalHTML = finalHTML.replace(
             "<head>",
             `<head><base href="${liveUrl}/">`,
           );
         }
 
-        // 3. INJECT CSS (Replace <link> dengan <style> dari cache)
-        const cssFiles = Object.values(projectFiles).filter((f) =>
-          f.name.endsWith(".css"),
-        );
-        cssFiles.forEach((css) => {
-          // Escape special chars for regex
-          const safeName = css.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          // Regex mencari: href="style.css" atau href="./style.css"
-          const regex = new RegExp(
-            `<link[^>]+href=["']\\.?\\/?${safeName}["'][^>]*>`,
-            "gi",
-          );
-
-          if (finalHTML.match(regex)) {
-            finalHTML = finalHTML.replace(
-              regex,
-              `<style data-source="${css.name}">\n${css.content}\n</style>`,
-            );
-          } else {
-            // Jika tidak ketemu link-nya, inject manual di head
-            finalHTML = finalHTML.replace(
-              "</head>",
-              `<style data-source="${css.name}">\n${css.content}\n</style></head>`,
-            );
-          }
-        });
-
-        // 4. INJECT JS (Replace <script src> dengan <script> dari cache)
-        const jsFiles = Object.values(projectFiles).filter((f) =>
-          f.name.endsWith(".js"),
-        );
-        jsFiles.forEach((js) => {
-          const safeName = js.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-          const regex = new RegExp(
-            `<script[^>]+src=["']\\.?\\/?${safeName}["'][^>]*>\\s*<\\/script>`,
-            "gi",
-          );
-
-          if (finalHTML.match(regex)) {
-            finalHTML = finalHTML.replace(
-              regex,
-              `<script data-source="${js.name}">\n${js.content}\n<\/script>`,
-            );
-          }
-          // Note: Kita tidak auto-inject JS ke body kalau tag script-nya ga ada, bahaya/mengganggu.
-        });
-
-        // 5. RENDER KE IFRAME
+        // 5. RENDER
         frame.srcdoc = finalHTML;
       }
 
@@ -626,13 +599,11 @@
           list.innerHTML = "";
 
           if (data.success) {
-            // Urutkan: index.html paling atas
+            // Sort: HTML first
             data.files.sort((a, b) => (a.name === "index.html" ? -1 : 1));
 
-            // FETCH SEMUA KONTEN FILE UNTUK CACHE
-            // Ini penting supaya preview bisa menggabungkan HTML+CSS+JS tanpa request server berulang
+            // FETCH ALL CONTENT
             const promises = data.files.map(async (file) => {
-              // UI List Item
               const div = document.createElement("div");
               div.className = "file-item";
               let icon = "ri-file-line";
@@ -641,12 +612,10 @@
               if (file.name.endsWith(".js")) icon = "ri-javascript-line";
 
               div.innerHTML = `<i class="${icon}"></i> ${file.name}`;
-              // ID unik biar bisa di-highlight
               div.id = `file-${file.path.replace(/[^a-zA-Z0-9]/g, "-")}`;
               div.onclick = () => selectFile(file.path);
               list.appendChild(div);
 
-              // Fetch Isi File
               const cRes = await fetch("/api/read", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -654,7 +623,6 @@
               });
               const cData = await cRes.json();
 
-              // Simpan ke Cache
               projectFiles[file.path] = {
                 name: file.name,
                 path: file.path,
@@ -666,7 +634,6 @@
             await Promise.all(promises);
             document.getElementById("global-loader").style.display = "none";
 
-            // Buka file pertama otomatis (index.html prioritas)
             if (projectFiles["index.html"]) selectFile("index.html");
             else if (data.files.length > 0) selectFile(data.files[0].path);
           }
@@ -679,7 +646,6 @@
       }
 
       function selectFile(path) {
-        // Highlight Sidebar
         document
           .querySelectorAll(".file-item")
           .forEach((el) => el.classList.remove("active"));
@@ -690,10 +656,8 @@
 
         currentPath = path;
         const file = projectFiles[path];
-
         document.getElementById("currentFileName").innerText = file.name;
 
-        // Deteksi Bahasa untuk Monaco
         let lang = "plaintext";
         if (file.name.endsWith(".html")) lang = "html";
         if (file.name.endsWith(".css")) lang = "css";
@@ -701,12 +665,9 @@
 
         document.getElementById("langDisplay").innerText = lang.toUpperCase();
         monaco.editor.setModelLanguage(editor.getModel(), lang);
-
-        // Isi Editor
         editor.setValue(file.content);
         currentSha = file.sha;
 
-        // Jika Preview sedang terbuka, refresh kontennya
         if (isPreviewOpen) updatePreviewContent();
       }
 
@@ -764,7 +725,7 @@
 
           if (data.success) {
             showToast("Saved & Triggered Deploy!", "success");
-            // Refresh SHA di background agar save berikutnya valid
+            // Refresh SHA background
             fetch("/api/read", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
