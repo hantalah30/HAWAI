@@ -389,6 +389,7 @@
           <button class="btn" id="btnPreview" onclick="togglePreview()">
             <i class="ri-layout-column-line"></i> LIVE PREVIEW
           </button>
+
           <button class="btn btn-primary" onclick="saveFile()">
             <i class="ri-save-3-fill"></i> SAVE
           </button>
@@ -400,7 +401,7 @@
         <div id="preview-container">
           <div class="preview-header">
             <span style="display: flex; align-items: center; gap: 5px"
-              ><i class="ri-eye-line"></i> WEB SIMULATOR (HTML+CSS+JS)</span
+              ><i class="ri-eye-line"></i> SIMULATOR (HTML + JS + CSS)</span
             >
             <button
               class="btn"
@@ -417,7 +418,7 @@
           </div>
           <iframe
             id="previewFrame"
-            sandbox="allow-scripts allow-modals allow-forms allow-same-origin"
+            sandbox="allow-scripts allow-modals allow-forms allow-same-origin allow-popups"
           ></iframe>
         </div>
       </div>
@@ -447,7 +448,7 @@
       let wordWrap = "off";
       let minimapEnabled = false;
 
-      // PROJECT CACHE: Menyimpan { 'index.html': {content: '...'}, 'style.css': {content: '...'} }
+      // PROJECT CACHE (Menyimpan seluruh isi file)
       const projectFiles = {};
 
       const params = new URLSearchParams(window.location.search);
@@ -500,7 +501,7 @@
             projectFiles[currentPath].content = editor.getValue();
             if (isPreviewOpen) {
               clearTimeout(debounceTimer);
-              debounceTimer = setTimeout(updatePreviewContent, 800); // Debounce untuk mencegah lag
+              debounceTimer = setTimeout(updatePreviewContent, 500); // 500ms Delay biar gak berat
             }
           }
         });
@@ -522,12 +523,12 @@
         loadFiles();
       });
 
-      /* --- 3. CORE PREVIEW LOGIC (DEEP INJECTION) --- */
-      // Fungsi ini menggabungkan semua file menjadi satu string HTML
+      /* --- 3. COMPILER LOGIC (VIRTUAL BUNDLER) --- */
+      // Ini adalah jantung dari Live Preview. Menggabungkan semua file.
       function updatePreviewContent() {
         const frame = document.getElementById("previewFrame");
 
-        // 1. Cari File HTML Utama
+        // 1. Cari File HTML (index.html prioritas)
         let htmlFile = null;
         if (currentPath && currentPath.endsWith(".html")) {
           htmlFile = projectFiles[currentPath];
@@ -539,34 +540,35 @@
         }
 
         if (!htmlFile) {
-          frame.srcdoc = `<body style="color:#666; font-family:sans-serif; padding:20px;"><h3>No HTML File Found</h3><p>Create or open an HTML file to start preview.</p></body>`;
+          frame.srcdoc = `<body style="color:#666; font-family:sans-serif; padding:20px;"><h3>Waiting for HTML...</h3><p>Open or create an .html file.</p></body>`;
           return;
         }
 
-        // 2. Parsing HTML String menjadi DOM Object
+        // 2. Parse HTML String ke DOM
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlFile.content, "text/html");
 
-        // 3. CSS BUNDLER (Cari <link> dan ganti dengan <style>)
+        // 3. INJECT CSS (Replace <link> with <style>)
         const links = doc.querySelectorAll('link[rel="stylesheet"]');
         links.forEach((link) => {
           const href = link.getAttribute("href");
           if (href) {
-            const fileName = href.split("/").pop(); // Ambil 'style.css' dari './style.css'
-            // Cari file di cache yang namanya cocok
+            // Ambil nama file saja (ignore ./ atau /)
+            const fileName = href.split("/").pop();
+            // Cari di cache
             const cssFile = Object.values(projectFiles).find(
               (f) => f.name === fileName,
             );
 
             if (cssFile) {
               const style = doc.createElement("style");
-              style.innerHTML = `/* Injected: ${fileName} */\n${cssFile.content}`;
-              link.replaceWith(style); // Ganti tag <link> dengan <style>
+              style.innerHTML = `/* Virtual CSS: ${fileName} */\n${cssFile.content}`;
+              link.replaceWith(style);
             }
           }
         });
 
-        // 4. JS BUNDLER (Cari <script src> dan ganti dengan inline <script>)
+        // 4. INJECT JS (Replace <script src> with inline <script>)
         const scripts = doc.querySelectorAll("script[src]");
         scripts.forEach((script) => {
           const src = script.getAttribute("src");
@@ -578,16 +580,33 @@
 
             if (jsFile) {
               const newScript = doc.createElement("script");
-              // Tambahkan try-catch agar error di JS user tidak mematikan iframe
-              newScript.innerHTML = `/* Injected: ${fileName} */\nconsole.log('Loading ${fileName}...');\ntry {\n${jsFile.content}\n} catch(err) { console.error('Error in ${fileName}:', err); }`;
-              script.replaceWith(newScript); // Ganti tag script external dengan inline
+              // Bungkus JS dengan IIFE atau try-catch agar aman
+              newScript.textContent = `
+                        console.log('📦 Loaded Virtual JS: ${fileName}');
+                        try {
+                            ${jsFile.content}
+                        } catch(err) {
+                            console.error('JS Error in ${fileName}:', err);
+                        }
+                    `;
+              script.replaceWith(newScript);
             }
           }
         });
 
-        // 5. Render ke Iframe
-        // Kita gunakan XMLSerializer untuk mengubah DOM kembali menjadi String HTML
+        // 5. Inject Console Output Handler (Opsional, agar user tau jika ada error)
+        const logger = doc.createElement("script");
+        logger.textContent = `
+            window.onerror = function(msg, url, line) { 
+               document.body.innerHTML += '<div style="background:red;color:white;padding:10px;margin-top:10px;font-family:monospace;font-size:12px;">JS Error: ' + msg + ' (Line ' + line + ')</div>';
+            };
+        `;
+        doc.head.insertBefore(logger, doc.head.firstChild);
+
+        // 6. Serialize kembali ke HTML String
         const finalHtml = new XMLSerializer().serializeToString(doc);
+
+        // 7. Render ke Iframe
         frame.srcdoc = finalHtml;
       }
 
@@ -634,7 +653,7 @@
           if (data.success) {
             data.files.sort((a, b) => (a.name === "index.html" ? -1 : 1));
 
-            // PREFETCH ALL FILES
+            // FETCH ALL FILES PARALLEL
             const promises = data.files.map(async (file) => {
               const div = document.createElement("div");
               div.className = "file-item";
@@ -655,7 +674,7 @@
               });
               const cData = await cRes.json();
 
-              // Masukkan ke Cache Global
+              // SAVE TO CACHE
               projectFiles[file.path] = {
                 name: file.name,
                 path: file.path,
@@ -667,7 +686,6 @@
             await Promise.all(promises);
             document.getElementById("global-loader").style.display = "none";
 
-            // Buka index.html default
             if (projectFiles["index.html"]) selectFile("index.html");
             else if (data.files.length > 0) selectFile(data.files[0].path);
           }
@@ -699,6 +717,8 @@
 
         document.getElementById("langDisplay").innerText = lang.toUpperCase();
         monaco.editor.setModelLanguage(editor.getModel(), lang);
+
+        // PENTING: Set value tanpa mentrigger event change berulang kali
         editor.setValue(file.content);
         currentSha = file.sha;
 
